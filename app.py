@@ -26,6 +26,7 @@ def init_db():
         conn.commit()
 
 # ----------------- RUTAS ----------------- #
+
 @app.route("/")
 def index():
     conn = sqlite3.connect(DB_PATH)
@@ -35,8 +36,27 @@ def index():
     conn.close()
     return render_template("lista.html", productos=productos)
 
-@app.route("/admin", methods=["GET", "POST"])
+@app.route("/catalogo")
+def catalogo():
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute("SELECT * FROM productos WHERE activo = 1")
+    productos = c.fetchall()
+    conn.close()
+    return render_template("catalogo.html", productos=productos)
+
+@app.route("/admin")
 def admin():
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute("SELECT * FROM productos WHERE activo = 1")
+    productos = c.fetchall()
+    conn.close()
+    return render_template("admin.html", productos=productos)
+
+
+@app.route("/admin/agregar", methods=["GET", "POST"])
+def agregar_producto():
     if request.method == "POST":
         datos = (
             request.form["nombre"],
@@ -57,7 +77,61 @@ def admin():
         conn.commit()
         conn.close()
         return redirect(url_for("admin"))
-    return render_template("admin.html")
+    return render_template("admin_form.html")
+
+
+@app.route("/admin/eliminar/<int:producto_id>", methods=["POST"])
+def eliminar_producto(producto_id):
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute("UPDATE productos SET activo = 0 WHERE id = ?", (producto_id,))
+    conn.commit()
+    conn.close()
+    return redirect(url_for("admin"))
+
+
+
+@app.route("/admin/reactivar/<int:id>")
+def reactivar_producto(id):
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute("UPDATE productos SET activo = 1 WHERE id = ?", (id,))
+    conn.commit()
+    conn.close()
+    return redirect(url_for("admin"))
+
+
+@app.route("/admin/editar/<int:producto_id>", methods=["GET", "POST"])
+def editar_producto(producto_id):
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+
+    if request.method == "POST":
+        datos = (
+            request.form["nombre"],
+            request.form["descripcion"],
+            float(request.form["precio"]),
+            int(request.form["stock"]),
+            request.form["categoria"],
+            request.form["genero"],
+            request.form["talle"],
+            request.form["imagen"],
+            producto_id
+        )
+        c.execute("""
+            UPDATE productos SET
+                nombre = ?, descripcion = ?, precio = ?, stock = ?,
+                categoria = ?, genero = ?, talle = ?, imagen = ?
+            WHERE id = ?
+        """, datos)
+        conn.commit()
+        conn.close()
+        return redirect(url_for("admin"))
+
+    c.execute("SELECT * FROM productos WHERE id = ?", (producto_id,))
+    producto = c.fetchone()
+    conn.close()
+    return render_template("editar.html", producto=producto)
 
 # ----------------- INICIO ----------------- #
 if __name__ == "__main__":
