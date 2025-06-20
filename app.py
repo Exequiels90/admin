@@ -223,6 +223,23 @@ def ver_eliminados():
     conn.close()
     return render_template("eliminados.html", productos=productos)
 
+@app.route("/admin/exportar_catalogo")
+@login_requerido
+def exportar_catalogo():
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute("SELECT * FROM productos WHERE activo = 1")
+    productos = c.fetchall()
+    conn.close()
+
+    rendered = render_template("catalogo_exportado.html", productos=productos)
+    
+    export_path = os.path.join("exportados", "catalogo_exportado.html")
+    with open(export_path, "w", encoding="utf-8") as f:
+        f.write(rendered)
+    
+    flash("Catálogo exportado correctamente.", "success")
+    return redirect(url_for("admin"))
 
 
 # ----------------- INICIO ----------------- #
