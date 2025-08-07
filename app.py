@@ -1,285 +1,127 @@
-from flask import Flask, render_template, request, redirect, url_for, session, flash
-
+from flask import Flask, render_template, request, redirect, url_for
 import sqlite3
 import os
-from functools import wraps
-
-def login_requerido(f):
-    @wraps(f)
-    def decorada(*args, **kwargs):
-        if "usuario" not in session:
-            return redirect(url_for("login"))
-        return f(*args, **kwargs)
-    return decorada
-
+from datetime import datetime
 
 app = Flask(__name__)
-app.secret_key = 'admin123'  # 🔒 Agregá esta línea
 
+# Ruta de la base de datos
 DB_PATH = os.path.join("db", "productos.db")
 
-# ----------------- BASE DE DATOS ----------------- #
-def init_db():
-    with sqlite3.connect(DB_PATH) as conn:
-        c = conn.cursor()
-        c.execute('''
-            CREATE TABLE IF NOT EXISTS productos (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                nombre TEXT NOT NULL,
-                descripcion TEXT,
-                precio REAL NOT NULL,
-                stock INTEGER NOT NULL,
-                categoria TEXT,
-                genero TEXT,
-                talle TEXT,
-                imagen TEXT,
-                activo INTEGER DEFAULT 1
-            )
-        ''')
-        conn.commit()
 
-# ----------------- RUTAS ----------------- #
+def get_db_connection():
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    return conn
 
-@app.route("/")
+
+@app.route('/')
 def index():
-    conn = sqlite3.connect(DB_PATH)
-    c = conn.cursor()
-    c.execute("SELECT * FROM productos WHERE activo = 1")
-    productos = c.fetchall()
-    conn.close()
-    return render_template("lista.html", productos=productos)
+    return redirect(url_for('admin'))
 
-@app.route("/admin")
-@login_requerido
+
+@app.route('/admin')
 def admin():
-    if "usuario" not in session:
-        return redirect(url_for("login"))
-    conn = sqlite3.connect(DB_PATH)
-    c = conn.cursor()
-    c.execute("SELECT * FROM productos WHERE activo = 1")
-    productos = c.fetchall()
+    conn = get_db_connection()
+    productos = conn.execute("""
+        SELECT productos.id_producto, productos.nombre, categorias.nombre AS categoria, productos.activo
+        FROM productos
+        LEFT JOIN categorias ON productos.id_categoria = categorias.id_categoria
+        ORDER BY productos.nombre
+    """).fetchall()
+
     conn.close()
-    return render_template("admin.html", productos=productos)
+    return render_template('admin.html', productos=productos)
 
 
-@app.route("/admin/agregar", methods=["GET", "POST"])
-@login_requerido
-def agregar_producto():
-    if request.method == "POST":
-        datos = (
-            request.form["nombre"],
-            request.form["descripcion"],
-            float(request.form["precio"]),
-            int(request.form["stock"]),
-            request.form["categoria"],
-            request.form["genero"],
-            request.form["talle"],
-            request.form["imagen"]
-        )
-        conn = sqlite3.connect(DB_PATH)
-        c = conn.cursor()
-        c.execute("""
-            INSERT INTO productos (nombre, descripcion, precio, stock, categoria, genero, talle, imagen)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        """, datos)
+@app.route('/nuevo_producto', methods=['GET', 'POST'])
+def nuevo_producto():
+    conn = sqlite3.connect('db/productos.db')
+    c = conn.cursor()
+
+    if request.method == 'POST':
+        nombre = request.form['nombre']
+        categoria_id = request.form['categoria_id']
+        stock = int(request.form['stock'])
+        lote = request.form['lote']
+
+        c.execute("INSERT INTO productos (nombre, id_categoria, stock, lote) VALUES (?, ?, ?, ?)",
+                (nombre, categoria_id, stock, lote))
+
         conn.commit()
         conn.close()
-        return redirect(url_for("admin"))
-    return render_template("admin_form.html")
+        return redirect(url_for('admin'))
 
-
-@app.route("/admin/eliminar/<int:producto_id>", methods=["POST"])
-@login_requerido
-def eliminar_producto(producto_id):
-    conn = sqlite3.connect(DB_PATH)
-    c = conn.cursor()
-    c.execute("UPDATE productos SET activo = 0 WHERE id = ?", (producto_id,))
-    conn.commit()
+    # Si es GET, mostrar el formulario con las categorías disponibles
+    c.execute("SELECT id_categoria, nombre FROM categorias")
+    categorias = c.fetchall()
     conn.close()
-    return redirect(url_for("admin"))
+    return render_template('nuevo_producto.html', categorias=categorias)
 
 
-
-@app.route("/admin/reactivar/<int:id>")
-@login_requerido
-def reactivar_producto(id):
-    conn = sqlite3.connect(DB_PATH)
-    c = conn.cursor()
-    c.execute("UPDATE productos SET activo = 1 WHERE id = ?", (id,))
-    conn.commit()
+@app.route('/categorias')
+def listar_categorias():
+    conn = get_db_connection()
+    categorias = conn.execute("SELECT * FROM categorias").fetchall()
     conn.close()
-    return redirect(url_for("admin"))
+    return render_template('categorias.html', categorias=categorias)
 
 
-@app.route("/admin/editar/<int:producto_id>", methods=["GET", "POST"])
-@login_requerido
-def editar_producto(producto_id):
-    conn = sqlite3.connect(DB_PATH)
-    c = conn.cursor()
-
-    if request.method == "POST":
-        datos = (
-            request.form["nombre"],
-            request.form["descripcion"],
-            float(request.form["precio"]),
-            int(request.form["stock"]),
-            request.form["categoria"],
-            request.form["genero"],
-            request.form["talle"],
-            request.form["imagen"],
-            producto_id
-        )
-        c.execute("""
-            UPDATE productos SET
-                nombre = ?, descripcion = ?, precio = ?, stock = ?,
-                categoria = ?, genero = ?, talle = ?, imagen = ?
-            WHERE id = ?
-        """, datos)
+@app.route('/nueva_categoria', methods=['GET', 'POST'])
+def nueva_categoria():
+    if request.method == 'POST':
+        nombre = request.form['nombre']
+        conn = get_db_connection()
+        conn.execute("INSERT INTO categorias (nombre) VALUES (?)", (nombre,))
         conn.commit()
         conn.close()
-        return redirect(url_for("admin"))
+        return redirect(url_for('listar_categorias'))
+    return render_template('nueva_categoria.html')
 
-    c.execute("SELECT * FROM productos WHERE id = ?", (producto_id,))
-    producto = c.fetchone()
-    conn.close()
-    return render_template("editar.html", producto=producto)
+@app.route('/editar_producto/<int:id_producto>', methods=['GET', 'POST'])
+def editar_producto(id_producto):
+    conn = get_db_connection()
 
-@app.route("/catalogo")
-def catalogo():
-    genero = request.args.get("genero")
-    categoria = request.args.get("categoria")
-    talle = request.args.get("talle")
+    if request.method == 'POST':
+        nombre = request.form['nombre']
+        descripcion = request.form['descripcion']
+        id_categoria = request.form['id_categoria']
+        precio = float(request.form['precio'])
 
-    query = "SELECT * FROM productos WHERE activo = 1"
-    params = []
+        # Actualiza el producto
+        conn.execute("""UPDATE productos 
+                        SET nombre = ?, descripcion = ?, id_categoria = ? 
+                        WHERE id_producto = ?""",
+                     (nombre, descripcion, id_categoria, id_producto))
 
-    if genero:
-        query += " AND genero = ?"
-        params.append(genero)
+        # Actualiza el precio solo si es distinto al último
+        ultimo_precio = conn.execute("""SELECT precio_unitario 
+                                        FROM precios_venta 
+                                        WHERE id_producto = ? 
+                                        ORDER BY desde_fecha DESC 
+                                        LIMIT 1""", (id_producto,)).fetchone()
 
-    if categoria:
-        query += " AND categoria = ?"
-        params.append(categoria)
-
-    if talle:
-        query += " AND talle = ?"
-        params.append(talle)
-
-    conn = sqlite3.connect(DB_PATH)
-    c = conn.cursor()
-
-    c.execute(query, params)
-    productos = c.fetchall()
-
-    # Obtener valores únicos para los filtros
-    c.execute("SELECT DISTINCT genero FROM productos WHERE activo = 1 AND genero IS NOT NULL")
-    generos = [row[0] for row in c.fetchall()]
-
-    c.execute("SELECT DISTINCT categoria FROM productos WHERE activo = 1 AND categoria IS NOT NULL")
-    categorias = [row[0] for row in c.fetchall()]
-
-    c.execute("SELECT DISTINCT talle FROM productos WHERE activo = 1 AND talle IS NOT NULL")
-    talles = [row[0] for row in c.fetchall()]
-
-    conn.close()
-    return render_template("catalogo.html", productos=productos, generos=generos, categorias=categorias, talles=talles)
-
-@app.route("/login", methods=["GET", "POST"])
-def login():
-    if request.method == "POST":
-        username = request.form["username"]
-        password = request.form["password"]
-
-        conn = sqlite3.connect(DB_PATH)
-        c = conn.cursor()
-        c.execute("SELECT * FROM usuarios WHERE username = ? AND password = ?", (username, password))
-        usuario = c.fetchone()
-        conn.close()
-
-        if usuario:
-            session["usuario"] = username
-            flash("Inicio de sesión exitoso", "success")
-            return redirect(url_for("admin"))
-        else:
-            flash("Usuario o contraseña incorrectos", "danger")
-
-    return render_template("login.html")
-
-
-
-@app.route("/logout")
-def logout():
-    session.pop("usuario", None)
-    flash("Sesión cerrada", "info")
-    return redirect(url_for("login"))
-
-@app.route("/admin/eliminados")
-@login_requerido
-def ver_eliminados():
-    conn = sqlite3.connect(DB_PATH)
-    c = conn.cursor()
-    c.execute("SELECT * FROM productos WHERE activo = 0")
-    productos = c.fetchall()
-    conn.close()
-    return render_template("eliminados.html", productos=productos)
-
-@app.route("/admin/exportar_catalogo")
-@login_requerido
-def exportar_catalogo():
-    conn = sqlite3.connect(DB_PATH)
-    c = conn.cursor()
-    c.execute("SELECT * FROM productos WHERE activo = 1")
-    productos = c.fetchall()
-    conn.close()
-
-    rendered = render_template("catalogo_exportado.html", productos=productos)
-    
-    export_path = os.path.join("exportados", "catalogo_exportado.html")
-    with open(export_path, "w", encoding="utf-8") as f:
-        f.write(rendered)
-    
-    flash("Catálogo exportado correctamente.", "success")
-    return redirect(url_for("admin"))
-
-
-# ----------------- INICIO ----------------- #
-if __name__ == "__main__":
-    os.makedirs("db", exist_ok=True)
-
-    with sqlite3.connect(DB_PATH) as conn:
-        c = conn.cursor()
-        
-        # Crear tabla de productos (por si no la tenés acá)
-        c.execute('''
-            CREATE TABLE IF NOT EXISTS productos (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                nombre TEXT NOT NULL,
-                descripcion TEXT,
-                precio REAL NOT NULL,
-                stock INTEGER NOT NULL,
-                categoria TEXT,
-                genero TEXT,
-                talle TEXT,
-                imagen TEXT,
-                activo INTEGER DEFAULT 1
-            )
-        ''')
-
-        # Crear tabla de usuarios
-        c.execute('''
-            CREATE TABLE IF NOT EXISTS usuarios (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                username TEXT NOT NULL UNIQUE,
-                password TEXT NOT NULL
-            )
-        ''')
-
-        # Crear usuario admin por defecto si no existe
-        c.execute("SELECT * FROM usuarios WHERE username = 'admin'")
-        if not c.fetchone():
-            c.execute("INSERT INTO usuarios (username, password) VALUES (?, ?)", ('admin', 'admin123'))
+        if not ultimo_precio or float(ultimo_precio['precio_unitario']) != precio:
+            conn.execute("""INSERT INTO precios_venta (id_producto, precio_unitario, desde_fecha) 
+                            VALUES (?, ?, ?)""", (id_producto, precio, datetime.now().date()))
 
         conn.commit()
+        conn.close()
+        return redirect(url_for('admin'))
 
+    else:
+        producto = conn.execute("""SELECT * FROM productos WHERE id_producto = ?""", (id_producto,)).fetchone()
+        categorias = conn.execute("SELECT * FROM categorias").fetchall()
+        precio = conn.execute("""SELECT precio_unitario FROM precios_venta 
+                                 WHERE id_producto = ? ORDER BY desde_fecha DESC LIMIT 1""",
+                              (id_producto,)).fetchone()
+
+        conn.close()
+        return render_template('editar_producto.html',
+                               producto=producto,
+                               categorias=categorias,
+                               precio=precio['precio_unitario'] if precio else 0)
+
+
+if __name__ == '__main__':
     app.run(debug=True)
-
