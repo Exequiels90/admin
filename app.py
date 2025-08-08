@@ -8,53 +8,56 @@ app = Flask(__name__)
 # Ruta de la base de datos
 DB_PATH = os.path.join("db", "productos.db")
 
-
 def get_db_connection():
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     return conn
 
-
 @app.route('/')
 def index():
     return redirect(url_for('admin'))
-
 
 @app.route('/admin')
 def admin():
     conn = get_db_connection()
     productos = conn.execute("""
-        SELECT productos.id_producto, productos.nombre, categorias.nombre AS categoria, productos.activo
-        FROM productos
-        LEFT JOIN categorias ON productos.id_categoria = categorias.id_categoria
-        ORDER BY productos.nombre
-    """).fetchall()
+        SELECT p.id_producto, p.codigo, p.nombre, c.nombre AS categoria, p.precio_compra, p.precio_venta, p.eliminado
+        FROM productos p
+        LEFT JOIN categorias c ON p.id_categoria = c.id_categoria
+        WHERE p.eliminado = 0
 
+    """).fetchall()
     conn.close()
     return render_template('admin.html', productos=productos)
 
-
 @app.route('/nuevo_producto', methods=['GET', 'POST'])
 def nuevo_producto():
-    conn = sqlite3.connect('db/productos.db')
+    conn = get_db_connection()
     c = conn.cursor()
 
     if request.method == 'POST':
-        nombre = request.form['nombre']
+        codigo = request.form['codigo'].strip()
+        nombre = request.form['nombre'].strip()
         categoria_id = request.form['categoria_id']
-        stock = int(request.form['stock'])
-        lote = request.form['lote']
+        precio_compra = float(request.form['precio_compra'])
+        precio_venta = float(request.form['precio_venta'])
 
-        c.execute("INSERT INTO productos (nombre, id_categoria, stock, lote) VALUES (?, ?, ?, ?)",
-                (nombre, categoria_id, stock, lote))
+        # Validar que el código no exista ya
+        existing = c.execute("SELECT 1 FROM productos WHERE codigo = ?", (codigo,)).fetchone()
+        if existing:
+            conn.close()
+            return "Error: El código ya existe", 400  # Podrías mejor mostrar mensaje en plantilla
+
+        c.execute("""INSERT INTO productos 
+            (codigo, nombre, id_categoria, precio_compra, precio_venta) 
+            VALUES (?, ?, ?, ?, ?)""",
+            (codigo, nombre, categoria_id, precio_compra, precio_venta))
 
         conn.commit()
         conn.close()
         return redirect(url_for('admin'))
 
-    # Si es GET, mostrar el formulario con las categorías disponibles
-    c.execute("SELECT id_categoria, nombre FROM categorias")
-    categorias = c.fetchall()
+    categorias = c.execute("SELECT id_categoria, nombre FROM categorias").fetchall()
     conn.close()
     return render_template('nuevo_producto.html', categorias=categorias)
 
@@ -65,7 +68,6 @@ def listar_categorias():
     categorias = conn.execute("SELECT * FROM categorias").fetchall()
     conn.close()
     return render_template('categorias.html', categorias=categorias)
-
 
 @app.route('/nueva_categoria', methods=['GET', 'POST'])
 def nueva_categoria():
@@ -89,39 +91,59 @@ def editar_producto(id_producto):
         precio = float(request.form['precio'])
 
         # Actualiza el producto
-        conn.execute("""UPDATE productos 
-                        SET nombre = ?, descripcion = ?, id_categoria = ? 
-                        WHERE id_producto = ?""",
-                     (nombre, descripcion, id_categoria, id_producto))
+        conn.execute("""
+            UPDATE productos 
+            SET nombre = ?, descripcion = ?, id_categoria = ? 
+            WHERE id_producto = ?
+        """, (nombre, descripcion, id_categoria, id_producto))
 
         # Actualiza el precio solo si es distinto al último
-        ultimo_precio = conn.execute("""SELECT precio_unitario 
-                                        FROM precios_venta 
-                                        WHERE id_producto = ? 
-                                        ORDER BY desde_fecha DESC 
-                                        LIMIT 1""", (id_producto,)).fetchone()
+        ultimo_precio = conn.execute("""
+            SELECT precio_unitario 
+            FROM precios_venta 
+            WHERE id_producto = ? 
+            ORDER BY desde_fecha DESC 
+            LIMIT 1
+        """, (id_producto,)).fetchone()
 
         if not ultimo_precio or float(ultimo_precio['precio_unitario']) != precio:
-            conn.execute("""INSERT INTO precios_venta (id_producto, precio_unitario, desde_fecha) 
-                            VALUES (?, ?, ?)""", (id_producto, precio, datetime.now().date()))
+            conn.execute("""
+                INSERT INTO precios_venta (id_producto, precio_unitario, desde_fecha) 
+                VALUES (?, ?, ?)
+            """, (id_producto, precio, datetime.now().date()))
 
         conn.commit()
         conn.close()
         return redirect(url_for('admin'))
 
     else:
-        producto = conn.execute("""SELECT * FROM productos WHERE id_producto = ?""", (id_producto,)).fetchone()
+        producto = conn.execute(
+            "SELECT * FROM productos WHERE id_producto = ?", (id_producto,)
+        ).fetchone()
         categorias = conn.execute("SELECT * FROM categorias").fetchall()
-        precio = conn.execute("""SELECT precio_unitario FROM precios_venta 
-                                 WHERE id_producto = ? ORDER BY desde_fecha DESC LIMIT 1""",
-                              (id_producto,)).fetchone()
+        precio = conn.execute("""
+            SELECT precio_unitario 
+            FROM precios_venta 
+            WHERE id_producto = ? 
+            ORDER BY desde_fecha DESC 
+            LIMIT 1
+        """, (id_producto,)).fetchone()
 
         conn.close()
-        return render_template('editar_producto.html',
-                               producto=producto,
-                               categorias=categorias,
-                               precio=precio['precio_unitario'] if precio else 0)
+        return render_template(
+            'editar_producto.html',
+            producto=producto,
+            categorias=categorias,
+            precio=precio['precio_unitario'] if precio else 0
+        )
 
+@app.route("/eliminar/<int:id_producto>")
+def eliminar_producto(id_producto):
+    conn = get_db_connection()
+    conn.execute("UPDATE productos SET eliminado = 1 WHERE id_producto = ?", (id_producto,))
+    conn.commit()
+    conn.close()
+    return redirect(url_for("admin"))
 
 if __name__ == '__main__':
     app.run(debug=True)

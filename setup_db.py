@@ -18,16 +18,17 @@ CREATE TABLE IF NOT EXISTS categorias (
 
 # Tabla de productos
 cursor.execute("""
-CREATE TABLE IF NOT EXISTS productos (
+CREATE TABLE productos (
     id_producto INTEGER PRIMARY KEY AUTOINCREMENT,
+    codigo TEXT UNIQUE NOT NULL,
     nombre TEXT NOT NULL,
     descripcion TEXT,
     id_categoria INTEGER,
-    stock INTEGER,
-    lote TEXT,
-    activo INTEGER DEFAULT 1,
+    precio_compra REAL,
+    eliminado INTEGER DEFAULT 0,
     FOREIGN KEY (id_categoria) REFERENCES categorias(id_categoria)
-)
+);
+
 """)
 
 # Tabla de precios de venta históricos
