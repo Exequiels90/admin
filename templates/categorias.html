@@ -1,0 +1,418 @@
+{% extends "base.html" %}
+
+{% block title %}Administración de Categorías{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0">🏷️ Administración de Categorías</h1>
+                <div>
+                    <button type="button" class="btn btn-success" onclick="abrirModalNuevaCategoria()">
+                        <i class="fas fa-plus"></i> Nueva Categoría
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Buscador -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <div class="input-group">
+                        <span class="input-group-text">
+                            <i class="fas fa-search"></i>
+                        </span>
+                        <input type="text" class="form-control" id="buscadorCategorias" 
+                               placeholder="Buscar categorías, subcategorías, marcas o versiones..." 
+                               onkeyup="filtrarJerarquia()">
+                        <button class="btn btn-outline-secondary" type="button" onclick="limpiarBusqueda()">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Vista Jerárquica -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-sitemap text-primary"></i> Estructura Jerárquica Completa
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th style="width: 25%;">Categoría</th>
+                                    <th style="width: 25%;">Subcategoría</th>
+                                    <th style="width: 25%;">Marca</th>
+                                    <th style="width: 25%;">Versión</th>
+                </tr>
+            </thead>
+                            <tbody id="tablaJerarquia">
+                                {% set current_categoria = namespace(id=None, nombre=None) %}
+                                {% set current_subcategoria = namespace(id=None, nombre=None) %}
+                                {% set current_marca = namespace(id=None, nombre=None) %}
+                                
+                                {% for item in jerarquia %}
+                                    <tr class="jerarquia-item" 
+                                        data-categoria="{{ item.categoria_nombre or '' }}"
+                                        data-subcategoria="{{ item.subcategoria_nombre or '' }}"
+                                        data-marca="{{ item.marca_nombre or '' }}"
+                                        data-version="{{ item.version_nombre or '' }}">
+                                        <td>
+                                            {% if item.categoria_nombre != current_categoria.nombre %}
+                                                <div class="d-flex align-items-center">
+                                                    <strong class="text-primary">{{ item.categoria_nombre }}</strong>
+                                                    <div class="ms-2">
+                                                        <button type="button" class="btn btn-outline-info btn-sm" 
+                                                                onclick="abrirModalNuevaSubcategoria({{ item.id_categoria }}, '{{ item.categoria_nombre }}')">
+                                                            <i class="fas fa-plus"></i>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                                {% set current_categoria.id = item.id_categoria %}
+                                                {% set current_categoria.nombre = item.categoria_nombre %}
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if item.subcategoria_nombre %}
+                                                {% if item.subcategoria_nombre != current_subcategoria.nombre %}
+                                                    <div class="d-flex align-items-center">
+                                                        <span class="text-info">{{ item.subcategoria_nombre }}</span>
+                                                        <div class="ms-2">
+                                                            <button type="button" class="btn btn-outline-warning btn-sm" 
+                                                                    onclick="abrirModalNuevaMarca({{ item.id_subcategoria }}, '{{ item.subcategoria_nombre }}')">
+                                                                <i class="fas fa-plus"></i>
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                    {% set current_subcategoria.id = item.id_subcategoria %}
+                                                    {% set current_subcategoria.nombre = item.subcategoria_nombre %}
+                                                {% endif %}
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if item.marca_nombre %}
+                                                {% if item.marca_nombre != current_marca.nombre %}
+                                                    <div class="d-flex align-items-center">
+                                                        <span class="text-warning">{{ item.marca_nombre }}</span>
+                                                        <div class="ms-2">
+                                                            <button type="button" class="btn btn-outline-danger btn-sm" 
+                                                                    onclick="abrirModalNuevaVersion({{ item.id_marca }}, '{{ item.marca_nombre }}')">
+                                                                <i class="fas fa-plus"></i>
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                    {% set current_marca.id = item.id_marca %}
+                                                    {% set current_marca.nombre = item.marca_nombre %}
+                                                {% endif %}
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if item.version_nombre %}
+                                                <span class="text-danger">{{ item.version_nombre }}</span>
+                                            {% endif %}
+                                        </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Nueva Categoría -->
+<div class="modal fade" id="modalNuevaCategoria" tabindex="-1" aria-labelledby="modalNuevaCategoriaLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalNuevaCategoriaLabel">
+                    <i class="fas fa-plus text-success"></i> Nueva Categoría
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="formNuevaCategoria">
+                    <div class="mb-3">
+                        <label for="nombre_categoria" class="form-label">Nombre de la Categoría *</label>
+                        <input type="text" class="form-control" id="nombre_categoria" name="nombre" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-success" onclick="crearCategoria()">
+                    <i class="fas fa-save"></i> Crear Categoría
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Nueva Subcategoría -->
+<div class="modal fade" id="modalNuevaSubcategoria" tabindex="-1" aria-labelledby="modalNuevaSubcategoriaLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalNuevaSubcategoriaLabel">
+                    <i class="fas fa-plus text-info"></i> Nueva Subcategoría
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="formNuevaSubcategoria">
+                    <div class="mb-3">
+                        <label class="form-label">Categoría Padre</label>
+                        <input type="text" class="form-control" id="categoria_padre" readonly>
+                        <input type="hidden" id="categoria_id_subcategoria" name="categoria_id">
+                    </div>
+                    <div class="mb-3">
+                        <label for="nombre_subcategoria" class="form-label">Nombre de la Subcategoría *</label>
+                        <input type="text" class="form-control" id="nombre_subcategoria" name="nombre" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-info" onclick="crearSubcategoria()">
+                    <i class="fas fa-save"></i> Crear Subcategoría
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Nueva Marca -->
+<div class="modal fade" id="modalNuevaMarca" tabindex="-1" aria-labelledby="modalNuevaMarcaLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalNuevaMarcaLabel">
+                    <i class="fas fa-plus text-warning"></i> Nueva Marca
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="formNuevaMarca">
+                    <div class="mb-3">
+                        <label class="form-label">Subcategoría Padre</label>
+                        <input type="text" class="form-control" id="subcategoria_padre" readonly>
+                        <input type="hidden" id="subcategoria_id_marca" name="subcategoria_id">
+                    </div>
+                    <div class="mb-3">
+                        <label for="nombre_marca" class="form-label">Nombre de la Marca *</label>
+                        <input type="text" class="form-control" id="nombre_marca" name="nombre" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-warning" onclick="crearMarca()">
+                    <i class="fas fa-save"></i> Crear Marca
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Nueva Versión -->
+<div class="modal fade" id="modalNuevaVersion" tabindex="-1" aria-labelledby="modalNuevaVersionLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalNuevaVersionLabel">
+                    <i class="fas fa-plus text-danger"></i> Nueva Versión
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="formNuevaVersion">
+                    <div class="mb-3">
+                        <label class="form-label">Marca Padre</label>
+                        <input type="text" class="form-control" id="marca_padre" readonly>
+                        <input type="hidden" id="marca_id_version" name="marca_id">
+                    </div>
+                    <div class="mb-3">
+                        <label for="nombre_version" class="form-label">Nombre de la Versión *</label>
+                        <input type="text" class="form-control" id="nombre_version" name="nombre" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-danger" onclick="crearVersion()">
+                    <i class="fas fa-save"></i> Crear Versión
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Funciones para abrir modales
+function abrirModalNuevaCategoria() {
+    const modal = new bootstrap.Modal(document.getElementById('modalNuevaCategoria'));
+    modal.show();
+}
+
+function abrirModalNuevaSubcategoria(categoriaId, categoriaNombre) {
+    document.getElementById('categoria_padre').value = categoriaNombre;
+    document.getElementById('categoria_id_subcategoria').value = categoriaId;
+    const modal = new bootstrap.Modal(document.getElementById('modalNuevaSubcategoria'));
+    modal.show();
+}
+
+function abrirModalNuevaMarca(subcategoriaId, subcategoriaNombre) {
+    document.getElementById('subcategoria_padre').value = subcategoriaNombre;
+    document.getElementById('subcategoria_id_marca').value = subcategoriaId;
+    const modal = new bootstrap.Modal(document.getElementById('modalNuevaMarca'));
+    modal.show();
+}
+
+function abrirModalNuevaVersion(marcaId, marcaNombre) {
+    document.getElementById('marca_padre').value = marcaNombre;
+    document.getElementById('marca_id_version').value = marcaId;
+    const modal = new bootstrap.Modal(document.getElementById('modalNuevaVersion'));
+    modal.show();
+}
+
+// Funciones para el buscador
+function filtrarJerarquia() {
+    const busqueda = document.getElementById('buscadorCategorias').value.toLowerCase();
+    const filas = document.querySelectorAll('.jerarquia-item');
+    
+    filas.forEach(fila => {
+        const categoria = fila.getAttribute('data-categoria').toLowerCase();
+        const subcategoria = fila.getAttribute('data-subcategoria').toLowerCase();
+        const marca = fila.getAttribute('data-marca').toLowerCase();
+        const version = fila.getAttribute('data-version').toLowerCase();
+        
+        const coincide = categoria.includes(busqueda) || 
+                        subcategoria.includes(busqueda) || 
+                        marca.includes(busqueda) || 
+                        version.includes(busqueda);
+        
+        fila.style.display = coincide ? '' : 'none';
+    });
+}
+
+function limpiarBusqueda() {
+    document.getElementById('buscadorCategorias').value = '';
+    filtrarJerarquia();
+}
+
+// Funciones para crear nuevos elementos
+function crearCategoria() {
+    const formData = new FormData(document.getElementById('formNuevaCategoria'));
+    const data = Object.fromEntries(formData.entries());
+    
+    fetch('/api/categorias', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.success) {
+            location.reload();
+        } else {
+            alert('Error: ' + result.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error al crear la categoría');
+    });
+}
+
+function crearSubcategoria() {
+    const formData = new FormData(document.getElementById('formNuevaSubcategoria'));
+    const data = Object.fromEntries(formData.entries());
+    
+    fetch('/api/subcategorias', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.success) {
+            location.reload();
+        } else {
+            alert('Error: ' + result.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error al crear la subcategoría');
+    });
+}
+
+function crearMarca() {
+    const formData = new FormData(document.getElementById('formNuevaMarca'));
+    const data = Object.fromEntries(formData.entries());
+    
+    fetch('/api/marcas', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.success) {
+            location.reload();
+        } else {
+            alert('Error: ' + result.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error al crear la marca');
+    });
+}
+
+function crearVersion() {
+    const formData = new FormData(document.getElementById('formNuevaVersion'));
+    const data = Object.fromEntries(formData.entries());
+    
+    fetch('/api/versiones', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.success) {
+            location.reload();
+        } else {
+            alert('Error: ' + result.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error al crear la versión');
+    });
+}
+</script>
+{% endblock %}

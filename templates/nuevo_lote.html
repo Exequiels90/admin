@@ -1,0 +1,734 @@
+{% extends "base.html" %}
+
+{% block title %}Nuevo Lote{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0">📦 Nuevo Lote</h1>
+                <div>
+                    <a href="{{ url_for('listar_lotes') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left"></i> Volver a Lotes
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <form method="POST" id="formNuevoLote">
+        <!-- Información del Lote -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card shadow-sm">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-info-circle text-primary"></i> 
+                            Información del Lote
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-3 mb-3">
+                                <label for="numero_lote" class="form-label">Número de Lote</label>
+                                <input type="text" class="form-control" id="numero_lote" name="numero_lote" 
+                                       value="{{ numero_lote }}" readonly>
+                                <div class="form-text">Generado automáticamente</div>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label for="nro_factura" class="form-label">Número de Factura</label>
+                                <input type="text" class="form-control" id="nro_factura" name="nro_factura" required>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label for="id_proveedor" class="form-label">Proveedor</label>
+                                <div class="input-group">
+                                    <select class="form-select" id="id_proveedor" name="id_proveedor" required>
+                                        <option value="">Seleccionar proveedor...</option>
+                                        {% for proveedor in proveedores %}
+                                        <option value="{{ proveedor.id_proveedor }}">{{ proveedor.nombre }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#modalNuevoProveedor">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label for="fecha_factura" class="form-label">Fecha de Factura</label>
+                                <input type="date" class="form-control" id="fecha_factura" name="fecha_factura" 
+                                       value="{{ today }}" required>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-12">
+                                <label for="observaciones" class="form-label">Observaciones</label>
+                                <textarea class="form-control" id="observaciones" name="observaciones" rows="2"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Productos del Lote -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card shadow-sm">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="fas fa-boxes text-success"></i> 
+                            Productos del Lote
+                        </h5>
+                        <div>
+                            <button type="button" class="btn btn-outline-success me-2" onclick="abrirModalAdministracionCategorias()">
+                                <i class="fas fa-cogs"></i> Administrar Categorías
+                            </button>
+                            <button type="button" class="btn btn-success" onclick="agregarFilaProducto()">
+                                <i class="fas fa-plus"></i> Agregar Producto
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover" id="tablaProductos">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th style="width: 5%;">#</th>
+                                        <th style="width: 15%;">Producto Existente</th>
+                                        <th style="width: 20%;">Descripción</th>
+                                        <th style="width: 10%;">Categoría</th>
+                                        <th style="width: 10%;">Subcategoría</th>
+                                        <th style="width: 10%;">Marca</th>
+                                        <th style="width: 10%;">Versión</th>
+                                        <th style="width: 8%;">Cantidad</th>
+                                        <th style="width: 12%;">Precio Compra</th>
+                                        <th style="width: 12%;">Precio Venta</th>
+                                        <th style="width: 3%;">Acción</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tbodyProductos">
+                                    <!-- Las filas se agregarán dinámicamente -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Botones de Acción -->
+        <div class="row">
+            <div class="col-12">
+                <div class="d-flex justify-content-end gap-2">
+                    <a href="{{ url_for('listar_lotes') }}" class="btn btn-secondary">
+                        <i class="fas fa-times"></i> Cancelar
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Crear Lote
+                    </button>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Modal Nuevo Proveedor -->
+<div class="modal fade" id="modalNuevoProveedor" tabindex="-1" aria-labelledby="modalNuevoProveedorLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalNuevoProveedorLabel">
+                    <i class="fas fa-plus text-primary"></i> Nuevo Proveedor
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="formNuevoProveedor">
+                    <div class="mb-3">
+                        <label for="nombre_proveedor" class="form-label">Nombre del Proveedor *</label>
+                        <input type="text" class="form-control" id="nombre_proveedor" name="nombre" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="telefono_proveedor" class="form-label">Teléfono</label>
+                        <input type="text" class="form-control" id="telefono_proveedor" name="telefono">
+                    </div>
+                    <div class="mb-3">
+                        <label for="email_proveedor" class="form-label">Email</label>
+                        <input type="email" class="form-control" id="email_proveedor" name="email">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="crearProveedor()">
+                    <i class="fas fa-save"></i> Crear Proveedor
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Nueva Categoría -->
+<div class="modal fade" id="modalNuevaCategoria" tabindex="-1" aria-labelledby="modalNuevaCategoriaLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalNuevaCategoriaLabel">
+                    <i class="fas fa-plus text-success"></i> Nueva Categoría
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="formNuevaCategoria">
+                    <div class="mb-3">
+                        <label for="nombre_categoria" class="form-label">Nombre de la Categoría *</label>
+                        <input type="text" class="form-control" id="nombre_categoria" name="nombre" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-success" onclick="crearCategoria()">
+                    <i class="fas fa-save"></i> Crear Categoría
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Nueva Subcategoría -->
+<div class="modal fade" id="modalNuevaSubcategoria" tabindex="-1" aria-labelledby="modalNuevaSubcategoriaLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalNuevaSubcategoriaLabel">
+                    <i class="fas fa-plus text-info"></i> Nueva Subcategoría
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="formNuevaSubcategoria">
+                    <div class="mb-3">
+                        <label for="categoria_subcategoria" class="form-label">Categoría *</label>
+                        <select class="form-select" id="categoria_subcategoria" name="categoria_id" required>
+                            <option value="">Seleccionar categoría...</option>
+                            {% for categoria in categorias %}
+                            <option value="{{ categoria.id_categoria }}">{{ categoria.nombre }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="nombre_subcategoria" class="form-label">Nombre de la Subcategoría *</label>
+                        <input type="text" class="form-control" id="nombre_subcategoria" name="nombre" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-info" onclick="crearSubcategoria()">
+                    <i class="fas fa-save"></i> Crear Subcategoría
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Nueva Marca -->
+<div class="modal fade" id="modalNuevaMarca" tabindex="-1" aria-labelledby="modalNuevaMarcaLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalNuevaMarcaLabel">
+                    <i class="fas fa-plus text-warning"></i> Nueva Marca
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="formNuevaMarca">
+                    <div class="mb-3">
+                        <label for="subcategoria_marca" class="form-label">Subcategoría *</label>
+                        <select class="form-select" id="subcategoria_marca" name="subcategoria_id" required>
+                            <option value="">Seleccionar subcategoría...</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="nombre_marca" class="form-label">Nombre de la Marca *</label>
+                        <input type="text" class="form-control" id="nombre_marca" name="nombre" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-warning" onclick="crearMarca()">
+                    <i class="fas fa-save"></i> Crear Marca
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+ <!-- Modal Nueva Versión -->
+ <div class="modal fade" id="modalNuevaVersion" tabindex="-1" aria-labelledby="modalNuevaVersionLabel" aria-hidden="true">
+     <div class="modal-dialog">
+         <div class="modal-content">
+             <div class="modal-header">
+                 <h5 class="modal-title" id="modalNuevaVersionLabel">
+                     <i class="fas fa-plus text-danger"></i> Nueva Versión
+                 </h5>
+                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+             </div>
+             <div class="modal-body">
+                 <form id="formNuevaVersion">
+                     <div class="mb-3">
+                         <label for="marca_version" class="form-label">Marca *</label>
+                         <select class="form-select" id="marca_version" name="marca_id" required>
+                             <option value="">Seleccionar marca...</option>
+                         </select>
+                     </div>
+                     <div class="mb-3">
+                         <label for="nombre_version" class="form-label">Nombre de la Versión *</label>
+                         <input type="text" class="form-control" id="nombre_version" name="nombre" required>
+                     </div>
+                 </form>
+             </div>
+             <div class="modal-footer">
+                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                 <button type="button" class="btn btn-danger" onclick="crearVersion()">
+                     <i class="fas fa-save"></i> Crear Versión
+                 </button>
+             </div>
+         </div>
+     </div>
+ </div>
+
+ <!-- Modal Administración de Categorías -->
+ <div class="modal fade" id="modalAdministracionCategorias" tabindex="-1" aria-labelledby="modalAdministracionCategoriasLabel" aria-hidden="true">
+     <div class="modal-dialog modal-xl">
+         <div class="modal-content">
+             <div class="modal-header">
+                 <h5 class="modal-title" id="modalAdministracionCategoriasLabel">
+                     <i class="fas fa-cogs text-success"></i> Administración de Categorías
+                 </h5>
+                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+             </div>
+             <div class="modal-body">
+                 <iframe src="{{ url_for('listar_categorias') }}" width="100%" height="500px" frameborder="0"></iframe>
+             </div>
+             <div class="modal-footer">
+                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                 <button type="button" class="btn btn-primary" onclick="recargarDatosCategorias()">
+                     <i class="fas fa-sync"></i> Actualizar Datos
+                 </button>
+             </div>
+         </div>
+     </div>
+ </div>
+
+<script>
+// Variables globales
+let contadorFilas = 0;
+const categorias = JSON.parse('{{ categorias | tojson | safe }}');
+const subcategorias = JSON.parse('{{ subcategorias | tojson | safe }}');
+const marcas = JSON.parse('{{ marcas | tojson | safe }}');
+const versiones = JSON.parse('{{ versiones | tojson | safe }}');
+const productosExistentes = JSON.parse('{{ productos_existentes | tojson | safe }}');
+
+// Función para agregar una nueva fila de producto
+function agregarFilaProducto() {
+    contadorFilas++;
+    const tbody = document.getElementById('tbodyProductos');
+    
+    const nuevaFila = `
+        <tr id="fila_${contadorFilas}">
+            <td>${contadorFilas}</td>
+            <td>
+                <select class="form-select producto-existente" name="codigo_existente[]" onchange="seleccionarProductoExistente(this, ${contadorFilas})">
+                    <option value="">Nuevo producto...</option>
+                    ${productosExistentes.map(p => `<option value="${p.id_producto}">${p.codigo} - ${p.nombre}</option>`).join('')}
+                </select>
+            </td>
+            <td>
+                <input type="text" class="form-control" name="nombre[]" placeholder="Descripción del producto" required>
+            </td>
+            <td>
+                <select class="form-select categoria-select" name="categoria_id[]" onchange="cargarSubcategorias(this, ${contadorFilas})">
+                    <option value="">Seleccionar...</option>
+                    ${categorias.map(c => `<option value="${c.id_categoria}">${c.nombre}</option>`).join('')}
+                </select>
+            </td>
+            <td>
+                <select class="form-select subcategoria-select" name="subcategoria_id[]" onchange="cargarMarcas(this, ${contadorFilas})">
+                    <option value="">Seleccionar...</option>
+                </select>
+            </td>
+            <td>
+                <select class="form-select marca-select" name="marca_id[]" onchange="cargarVersiones(this, ${contadorFilas})">
+                    <option value="">Seleccionar...</option>
+                </select>
+            </td>
+            <td>
+                <select class="form-select version-select" name="version_id[]">
+                    <option value="">Seleccionar...</option>
+                </select>
+            </td>
+            <td>
+                <input type="number" class="form-control" name="cantidad[]" placeholder="Cant." min="1" required>
+            </td>
+            <td>
+                <input type="number" class="form-control" name="precio_compra[]" placeholder="0.00" step="0.01" min="0" required>
+            </td>
+            <td>
+                <input type="number" class="form-control" name="precio_venta[]" placeholder="0.00" step="0.01" min="0" required>
+            </td>
+            <td>
+                <button type="button" class="btn btn-outline-danger btn-sm" onclick="eliminarFila(${contadorFilas})">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </td>
+        </tr>
+    `;
+    
+    tbody.insertAdjacentHTML('beforeend', nuevaFila);
+}
+
+// Función para eliminar una fila
+function eliminarFila(numeroFila) {
+    const fila = document.getElementById(`fila_${numeroFila}`);
+    if (fila) {
+        fila.remove();
+    }
+}
+
+// Función para seleccionar un producto existente
+function seleccionarProductoExistente(select, filaIndex) {
+    const fila = document.getElementById(`fila_${filaIndex}`);
+    const productoId = select.value;
+    
+    if (productoId) {
+        const producto = productosExistentes.find(p => p.id_producto == productoId);
+        if (producto) {
+            fila.querySelector('input[name="nombre[]"]').value = producto.nombre;
+            fila.querySelector('input[name="precio_venta[]"]').value = producto.precio_venta;
+            
+            // Llenar los selects con los valores del producto
+            if (producto.categoria) {
+                const categoriaSelect = fila.querySelector('.categoria-select');
+                categoriaSelect.value = categorias.find(c => c.nombre === producto.categoria)?.id_categoria || '';
+                cargarSubcategorias(categoriaSelect, filaIndex);
+            }
+        }
+    }
+}
+
+// Función para cargar subcategorías
+function cargarSubcategorias(select, filaIndex) {
+    const categoriaId = select.value;
+    const fila = document.getElementById(`fila_${filaIndex}`);
+    const subcategoriaSelect = fila.querySelector('.subcategoria-select');
+    const marcaSelect = fila.querySelector('.marca-select');
+    const versionSelect = fila.querySelector('.version-select');
+    
+    // Limpiar selects dependientes
+    subcategoriaSelect.innerHTML = '<option value="">Seleccionar...</option>';
+    marcaSelect.innerHTML = '<option value="">Seleccionar...</option>';
+    versionSelect.innerHTML = '<option value="">Seleccionar...</option>';
+    
+    if (categoriaId) {
+        const subcategoriasFiltradas = subcategorias.filter(s => s.categoria_id == categoriaId);
+        subcategoriasFiltradas.forEach(sub => {
+            subcategoriaSelect.innerHTML += `<option value="${sub.id_subcategoria}">${sub.nombre}</option>`;
+        });
+    }
+}
+
+// Función para cargar marcas
+function cargarMarcas(select, filaIndex) {
+    const subcategoriaId = select.value;
+    const fila = document.getElementById(`fila_${filaIndex}`);
+    const marcaSelect = fila.querySelector('.marca-select');
+    const versionSelect = fila.querySelector('.version-select');
+    
+    // Limpiar selects dependientes
+    marcaSelect.innerHTML = '<option value="">Seleccionar...</option>';
+    versionSelect.innerHTML = '<option value="">Seleccionar...</option>';
+    
+    if (subcategoriaId) {
+        const marcasFiltradas = marcas.filter(m => m.subcategoria_id == subcategoriaId);
+        marcasFiltradas.forEach(marca => {
+            marcaSelect.innerHTML += `<option value="${marca.id_marca}">${marca.nombre}</option>`;
+        });
+    }
+}
+
+// Función para cargar versiones
+function cargarVersiones(select, filaIndex) {
+    const marcaId = select.value;
+    const fila = document.getElementById(`fila_${filaIndex}`);
+    const versionSelect = fila.querySelector('.version-select');
+    
+    // Limpiar select de versiones
+    versionSelect.innerHTML = '<option value="">Seleccionar...</option>';
+    
+    if (marcaId) {
+        const versionesFiltradas = versiones.filter(v => v.marca_id == marcaId);
+        versionesFiltradas.forEach(version => {
+            versionSelect.innerHTML += `<option value="${version.id_version}">${version.nombre}</option>`;
+        });
+    }
+}
+
+// Funciones para abrir modales
+function abrirModalSubcategoria() {
+    const modal = new bootstrap.Modal(document.getElementById('modalNuevaSubcategoria'));
+    modal.show();
+}
+
+function abrirModalMarca() {
+    const modal = new bootstrap.Modal(document.getElementById('modalNuevaMarca'));
+    modal.show();
+}
+
+function abrirModalVersion() {
+    const modal = new bootstrap.Modal(document.getElementById('modalNuevaVersion'));
+    modal.show();
+}
+
+function abrirModalAdministracionCategorias() {
+    const modal = new bootstrap.Modal(document.getElementById('modalAdministracionCategorias'));
+    modal.show();
+}
+
+function recargarDatosCategorias() {
+    // Recargar la página para obtener los datos actualizados
+    location.reload();
+}
+
+// Funciones para crear nuevos elementos
+function crearProveedor() {
+    const formData = new FormData(document.getElementById('formNuevoProveedor'));
+    const data = Object.fromEntries(formData.entries());
+    
+    fetch('/api/proveedores', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.success) {
+            // Agregar el nuevo proveedor al select
+            const select = document.getElementById('id_proveedor');
+            const option = new Option(result.proveedor.nombre, result.proveedor.id_proveedor);
+            select.add(option);
+            select.value = result.proveedor.id_proveedor;
+            
+            // Cerrar modal y limpiar formulario
+            bootstrap.Modal.getInstance(document.getElementById('modalNuevoProveedor')).hide();
+            document.getElementById('formNuevoProveedor').reset();
+            
+            // Mostrar mensaje de éxito
+            mostrarMensaje('Proveedor creado exitosamente', 'success');
+        } else {
+            mostrarMensaje(result.message, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        mostrarMensaje('Error al crear el proveedor', 'error');
+    });
+}
+
+function crearCategoria() {
+    const formData = new FormData(document.getElementById('formNuevaCategoria'));
+    const data = Object.fromEntries(formData.entries());
+    
+    fetch('/api/categorias', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.success) {
+            // Agregar la nueva categoría a todos los selects de categoría
+            const selects = document.querySelectorAll('.categoria-select');
+            selects.forEach(select => {
+                const option = new Option(result.categoria.nombre, result.categoria.id_categoria);
+                select.add(option);
+            });
+            
+            // Agregar a la variable global
+            categorias.push(result.categoria);
+            
+            // Cerrar modal y limpiar formulario
+            bootstrap.Modal.getInstance(document.getElementById('modalNuevaCategoria')).hide();
+            document.getElementById('formNuevaCategoria').reset();
+            
+            mostrarMensaje('Categoría creada exitosamente', 'success');
+        } else {
+            mostrarMensaje(result.message, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        mostrarMensaje('Error al crear la categoría', 'error');
+    });
+}
+
+function crearSubcategoria() {
+    const formData = new FormData(document.getElementById('formNuevaSubcategoria'));
+    const data = Object.fromEntries(formData.entries());
+    
+    fetch('/api/subcategorias', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.success) {
+            // Agregar la nueva subcategoría a la variable global
+            subcategorias.push(result.subcategoria);
+            
+            // Actualizar los selects de subcategoría de la categoría correspondiente
+            const selects = document.querySelectorAll('.subcategoria-select');
+            selects.forEach(select => {
+                const categoriaSelect = select.closest('tr').querySelector('.categoria-select');
+                if (categoriaSelect.value == result.subcategoria.categoria_id) {
+                    const option = new Option(result.subcategoria.nombre, result.subcategoria.id_subcategoria);
+                    select.add(option);
+                }
+            });
+            
+            // Cerrar modal y limpiar formulario
+            bootstrap.Modal.getInstance(document.getElementById('modalNuevaSubcategoria')).hide();
+            document.getElementById('formNuevaSubcategoria').reset();
+            
+            mostrarMensaje('Subcategoría creada exitosamente', 'success');
+        } else {
+            mostrarMensaje(result.message, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        mostrarMensaje('Error al crear la subcategoría', 'error');
+    });
+}
+
+function crearMarca() {
+    const formData = new FormData(document.getElementById('formNuevaMarca'));
+    const data = Object.fromEntries(formData.entries());
+    
+    fetch('/api/marcas', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.success) {
+            // Agregar la nueva marca a la variable global
+            marcas.push(result.marca);
+            
+            // Actualizar los selects de marca de la subcategoría correspondiente
+            const selects = document.querySelectorAll('.marca-select');
+            selects.forEach(select => {
+                const subcategoriaSelect = select.closest('tr').querySelector('.subcategoria-select');
+                if (subcategoriaSelect.value == result.marca.subcategoria_id) {
+                    const option = new Option(result.marca.nombre, result.marca.id_marca);
+                    select.add(option);
+                }
+            });
+            
+            // Cerrar modal y limpiar formulario
+            bootstrap.Modal.getInstance(document.getElementById('modalNuevaMarca')).hide();
+            document.getElementById('formNuevaMarca').reset();
+            
+            mostrarMensaje('Marca creada exitosamente', 'success');
+        } else {
+            mostrarMensaje(result.message, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        mostrarMensaje('Error al crear la marca', 'error');
+    });
+}
+
+function crearVersion() {
+    const formData = new FormData(document.getElementById('formNuevaVersion'));
+    const data = Object.fromEntries(formData.entries());
+    
+    fetch('/api/versiones', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.success) {
+            // Agregar la nueva versión a la variable global
+            versiones.push(result.version);
+            
+            // Actualizar los selects de versión de la marca correspondiente
+            const selects = document.querySelectorAll('.version-select');
+            selects.forEach(select => {
+                const marcaSelect = select.closest('tr').querySelector('.marca-select');
+                if (marcaSelect.value == result.version.marca_id) {
+                    const option = new Option(result.version.nombre, result.version.id_version);
+                    select.add(option);
+                }
+            });
+            
+            // Cerrar modal y limpiar formulario
+            bootstrap.Modal.getInstance(document.getElementById('modalNuevaVersion')).hide();
+            document.getElementById('formNuevaVersion').reset();
+            
+            mostrarMensaje('Versión creada exitosamente', 'success');
+        } else {
+            mostrarMensaje(result.message, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        mostrarMensaje('Error al crear la versión', 'error');
+    });
+}
+
+// Función para mostrar mensajes
+function mostrarMensaje(mensaje, tipo) {
+    // Crear un toast o alert temporal
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${tipo === 'success' ? 'success' : 'danger'} alert-dismissible fade show position-fixed`;
+    alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    alertDiv.innerHTML = `
+        ${mensaje}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    document.body.appendChild(alertDiv);
+    
+    // Remover después de 3 segundos
+    setTimeout(() => {
+        if (alertDiv.parentNode) {
+            alertDiv.remove();
+        }
+    }, 3000);
+}
+
+// Inicializar la primera fila al cargar la página
+document.addEventListener('DOMContentLoaded', function() {
+    agregarFilaProducto();
+});
+</script>
+{% endblock %}

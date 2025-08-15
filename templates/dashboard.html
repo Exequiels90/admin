@@ -1,0 +1,270 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <h2>📊 Dashboard - Panel de Control</h2>
+            
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <!-- Tarjetas de Estadísticas -->
+            <div class="row mb-4">
+                <div class="col-md-2">
+                    <div class="card bg-primary text-white">
+                        <div class="card-body text-center">
+                            <h6 class="card-title">Productos</h6>
+                            <h3 class="mb-0">{{ total_productos }}</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <div class="card bg-success text-white">
+                        <div class="card-body text-center">
+                            <h6 class="card-title">Ventas</h6>
+                            <h3 class="mb-0">{{ total_ventas }}</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <div class="card bg-info text-white">
+                        <div class="card-body text-center">
+                            <h6 class="card-title">Clientes</h6>
+                            <h3 class="mb-0">{{ total_clientes }}</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <div class="card bg-warning text-white">
+                        <div class="card-body text-center">
+                            <h6 class="card-title">Lotes</h6>
+                            <h3 class="mb-0">{{ total_lotes }}</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <div class="card bg-secondary text-white">
+                        <div class="card-body text-center">
+                            <h6 class="card-title">Proveedores</h6>
+                            <h3 class="mb-0">{{ total_proveedores }}</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <div class="card bg-danger text-white">
+                        <div class="card-body text-center">
+                            <h6 class="card-title">Stock Bajo</h6>
+                            <h3 class="mb-0">{{ stock_bajo }}</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Valor del Inventario y Préstamos -->
+            <div class="row mb-4">
+                <div class="col-md-8">
+                    <div class="card bg-dark text-white">
+                        <div class="card-body text-center">
+                            <h5 class="card-title">💰 Valor Total del Inventario</h5>
+                            <h2 class="mb-0">${{ "%.2f"|format(valor_inventario) }}</h2>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card bg-warning text-white">
+                        <div class="card-body text-center">
+                            <h5 class="card-title">💳 Préstamos Personales</h5>
+                            <h4 class="mb-0">${{ "%.2f"|format(total_prestamos.total_deuda_prestamos) }}</h4>
+                            <small>{{ total_prestamos.total_clientes_prestamo }} clientes</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <!-- Lotes Recientes -->
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">📋 Lotes Recientes</h5>
+                        </div>
+                        <div class="card-body">
+                            {% if lotes_recientes %}
+                            <div class="table-responsive">
+                                <table class="table table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>Factura</th>
+                                            <th>Fecha</th>
+                                            <th>Items</th>
+                                            <th>Acción</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for lote in lotes_recientes %}
+                                        <tr>
+                                            <td><small>#{{ lote.id_lote }}</small></td>
+                                            <td><small>{{ lote.nro_factura or '-' }}</small></td>
+                                            <td><small>{{ lote.fecha }}</small></td>
+                                            <td><span class="badge bg-primary">{{ lote.items }}</span></td>
+                                            <td>
+                                                <a href="{{ url_for('ver_lote', id_lote=lote.id_lote) }}" 
+                                                   class="btn btn-sm btn-outline-primary">
+                                                    👁️
+                                                </a>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            {% else %}
+                            <p class="text-muted text-center">No hay lotes registrados</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Ventas Recientes -->
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">💰 Ventas Recientes</h5>
+                        </div>
+                        <div class="card-body">
+                            {% if ventas_recientes %}
+                            <div class="table-responsive">
+                                <table class="table table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>Fecha</th>
+                                            <th>Cliente</th>
+                                            <th>Total</th>
+                                            <th>Acción</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for venta in ventas_recientes %}
+                                        <tr>
+                                            <td><small>#{{ venta.id_venta }}</small></td>
+                                            <td><small>{{ venta.fecha_venta }}</small></td>
+                                            <td><small>{{ venta.cliente or 'General' }}</small></td>
+                                            <td><strong>${{ "%.2f"|format(venta.total_venta) }}</strong></td>
+                                            <td>
+                                                <a href="{{ url_for('ver_venta', id_venta=venta.id_venta) }}" 
+                                                   class="btn btn-sm btn-outline-success">
+                                                    👁️
+                                                </a>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            {% else %}
+                            <p class="text-muted text-center">No hay ventas registradas</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Productos con Stock Bajo -->
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">⚠️ Stock Bajo</h5>
+                        </div>
+                        <div class="card-body">
+                            {% if productos_populares %}
+                            <div class="table-responsive">
+                                <table class="table table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>Código</th>
+                                            <th>Producto</th>
+                                            <th>Stock</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for producto in productos_populares %}
+                                        <tr class="{% if producto.stock < 5 %}table-danger{% elif producto.stock < 10 %}table-warning{% endif %}">
+                                            <td><code>{{ producto.codigo }}</code></td>
+                                            <td><small>{{ producto.nombre }}</small></td>
+                                            <td>
+                                                <span class="badge {% if producto.stock < 5 %}bg-danger{% elif producto.stock < 10 %}bg-warning{% else %}bg-success{% endif %}">
+                                                    {{ producto.stock }}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            {% else %}
+                            <p class="text-muted text-center">No hay productos con stock bajo</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Acciones Rápidas -->
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">⚡ Acciones Rápidas</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-2">
+                                    <a href="{{ url_for('nuevo_producto') }}" class="btn btn-primary w-100 mb-2">
+                                        ➕ Producto
+                                    </a>
+                                </div>
+                                <div class="col-md-2">
+                                    <a href="{{ url_for('nuevo_lote') }}" class="btn btn-success w-100 mb-2">
+                                        📦 Lote
+                                    </a>
+                                </div>
+                                <div class="col-md-2">
+                                    <a href="{{ url_for('nueva_venta') }}" class="btn btn-warning w-100 mb-2">
+                                        💰 Venta
+                                    </a>
+                                </div>
+                                <div class="col-md-2">
+                                    <a href="{{ url_for('nuevo_cliente') }}" class="btn btn-info w-100 mb-2">
+                                        👥 Cliente
+                                    </a>
+                                </div>
+                                <div class="col-md-2">
+                                    <a href="{{ url_for('generar_codigos') }}" class="btn btn-dark w-100 mb-2">
+                                        🏷️ Códigos
+                                    </a>
+                                </div>
+                                <div class="col-md-2">
+                                    <a href="{{ url_for('admin') }}" class="btn btn-secondary w-100 mb-2">
+                                        📋 Productos
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

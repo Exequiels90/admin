@@ -1,0 +1,304 @@
+{% extends "base.html" %}
+
+{% block title %}Análisis de Productos{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0">📦 Análisis de Productos</h1>
+                <div>
+                    <a href="{{ url_for('reportes') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left"></i> Volver a Reportes
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Productos Más Vendidos -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm border-success">
+                <div class="card-header bg-success bg-opacity-10">
+                    <h5 class="mb-0">
+                        <i class="fas fa-fire text-success"></i> 
+                        Productos Más Vendidos (Top 20)
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if mas_vendidos %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Ranking</th>
+                                    <th>Producto</th>
+                                    <th>Código</th>
+                                    <th>Categoría</th>
+                                    <th class="text-center">Total Vendido</th>
+                                    <th class="text-end">Ingresos Totales</th>
+                                    <th class="text-center">Stock Actual</th>
+                                    <th class="text-center">Rotación %</th>
+                                    <th class="text-center">Estado</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for producto in mas_vendidos %}
+                                <tr>
+                                    <td>
+                                        {% if loop.index == 1 %}
+                                        <span class="badge bg-warning">🥇</span>
+                                        {% elif loop.index == 2 %}
+                                        <span class="badge bg-secondary">🥈</span>
+                                        {% elif loop.index == 3 %}
+                                        <span class="badge bg-warning">🥉</span>
+                                        {% else %}
+                                        <span class="badge bg-info">{{ loop.index }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td><strong>{{ producto[0] }}</strong></td>
+                                    <td><code>{{ producto[1] }}</code></td>
+                                    <td>{{ producto[2] or 'Sin categoría' }}</td>
+                                    <td class="text-center">
+                                        <span class="badge bg-success">{{ producto[3] }}</span>
+                                    </td>
+                                    <td class="text-end fw-bold">${{ "%.2f"|format(producto[4]) }}</td>
+                                    <td class="text-center">
+                                        {% if producto[5] < 10 %}
+                                        <span class="badge bg-danger">{{ producto[5] }}</span>
+                                        {% elif producto[5] < 50 %}
+                                        <span class="badge bg-warning">{{ producto[5] }}</span>
+                                        {% else %}
+                                        <span class="badge bg-success">{{ producto[5] }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="badge bg-info">{{ "%.1f"|format(producto[6]) }}%</span>
+                                    </td>
+                                    <td class="text-center">
+                                        {% if producto[6] > 100 %}
+                                        <span class="badge bg-success">Alta Rotación</span>
+                                        {% elif producto[6] > 50 %}
+                                        <span class="badge bg-warning">Media Rotación</span>
+                                        {% else %}
+                                        <span class="badge bg-info">Baja Rotación</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-3">
+                        <i class="fas fa-fire fa-2x text-muted mb-2"></i>
+                        <p class="text-muted mb-0">No hay datos de ventas para mostrar productos más vendidos.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Productos Menos Vendidos -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm border-warning">
+                <div class="card-header bg-warning bg-opacity-10">
+                    <h5 class="mb-0">
+                        <i class="fas fa-exclamation-triangle text-warning"></i> 
+                        Productos Menos Vendidos (Con Stock)
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if menos_vendidos %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Producto</th>
+                                    <th>Código</th>
+                                    <th>Categoría</th>
+                                    <th class="text-center">Total Vendido</th>
+                                    <th class="text-center">Stock Actual</th>
+                                    <th class="text-end">Precio Venta</th>
+                                    <th class="text-center">Rotación %</th>
+                                    <th class="text-center">Recomendación</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for producto in menos_vendidos %}
+                                <tr>
+                                    <td><strong>{{ producto[0] }}</strong></td>
+                                    <td><code>{{ producto[1] }}</code></td>
+                                    <td>{{ producto[2] or 'Sin categoría' }}</td>
+                                    <td class="text-center">
+                                        <span class="badge bg-danger">{{ producto[3] }}</span>
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="badge bg-info">{{ producto[4] }}</span>
+                                    </td>
+                                    <td class="text-end">${{ "%.2f"|format(producto[5]) }}</td>
+                                    <td class="text-center">
+                                        <span class="badge bg-danger">{{ "%.1f"|format(producto[6]) }}%</span>
+                                    </td>
+                                    <td class="text-center">
+                                        {% if producto[6] < 5 %}
+                                        <span class="text-danger fw-bold">¡PROMOCIONAR!</span>
+                                        {% elif producto[6] < 20 %}
+                                        <span class="text-warning">Considerar promoción</span>
+                                        {% else %}
+                                        <span class="text-info">Monitorear</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-3">
+                        <i class="fas fa-exclamation-triangle fa-2x text-muted mb-2"></i>
+                        <p class="text-muted mb-0">No hay productos con stock para analizar.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Análisis de Rotación por Categoría -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm border-info">
+                <div class="card-header bg-info bg-opacity-10">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-pie text-info"></i> 
+                        Análisis de Rotación por Categoría
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if rotacion_categorias %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Categoría</th>
+                                    <th class="text-center">Total Productos</th>
+                                    <th class="text-center">Stock Promedio</th>
+                                    <th class="text-center">Total Vendido</th>
+                                    <th class="text-center">Rotación %</th>
+                                    <th class="text-center">Rendimiento</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for categoria in rotacion_categorias %}
+                                <tr>
+                                    <td><strong>{{ categoria[0] or 'Sin categoría' }}</strong></td>
+                                    <td class="text-center">
+                                        <span class="badge bg-info">{{ categoria[1] }}</span>
+                                    </td>
+                                    <td class="text-center">{{ "%.1f"|format(categoria[2]) }}</td>
+                                    <td class="text-center">
+                                        <span class="badge bg-success">{{ categoria[3] }}</span>
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="badge bg-primary">{{ "%.1f"|format(categoria[4]) }}%</span>
+                                    </td>
+                                    <td class="text-center">
+                                        {% if categoria[4] > 100 %}
+                                        <span class="badge bg-success">Excelente</span>
+                                        {% elif categoria[4] > 50 %}
+                                        <span class="badge bg-warning">Bueno</span>
+                                        {% elif categoria[4] > 20 %}
+                                        <span class="badge bg-info">Normal</span>
+                                        {% else %}
+                                        <span class="badge bg-danger">Bajo</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-3">
+                        <i class="fas fa-chart-pie fa-2x text-muted mb-2"></i>
+                        <p class="text-muted mb-0">No hay datos suficientes para analizar rotación por categoría.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Resumen de Acciones -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card shadow-sm border-primary">
+                <div class="card-header bg-primary bg-opacity-10">
+                    <h5 class="mb-0">
+                        <i class="fas fa-clipboard-list text-primary"></i> 
+                        Resumen de Acciones Recomendadas
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <h6 class="text-success">
+                                <i class="fas fa-arrow-up"></i> Productos Exitosos
+                            </h6>
+                            <ul class="list-unstyled">
+                                {% for producto in mas_vendidos[:3] %}
+                                <li class="mb-2">
+                                    <i class="fas fa-check text-success"></i>
+                                    <strong>{{ producto[0] }}</strong> - {{ producto[3] }} unidades vendidas
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        <div class="col-md-4">
+                            <h6 class="text-warning">
+                                <i class="fas fa-exclamation-triangle"></i> Necesitan Atención
+                            </h6>
+                            <ul class="list-unstyled">
+                                {% for producto in menos_vendidos[:3] %}
+                                <li class="mb-2">
+                                    <i class="fas fa-arrow-down text-warning"></i>
+                                    <strong>{{ producto[0] }}</strong> - Solo {{ producto[3] }} vendidas
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        <div class="col-md-4">
+                            <h6 class="text-info">
+                                <i class="fas fa-chart-line"></i> Categorías Destacadas
+                            </h6>
+                            <ul class="list-unstyled">
+                                {% for categoria in rotacion_categorias[:3] %}
+                                <li class="mb-2">
+                                    <i class="fas fa-star text-info"></i>
+                                    <strong>{{ categoria[0] or 'Sin categoría' }}</strong> - {{ "%.1f"|format(categoria[4]) }}% rotación
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Agregar tooltips para mejor UX
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+});
+</script>
+{% endblock %}

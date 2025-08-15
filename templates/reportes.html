@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+
+{% block title %}Reportes Avanzados{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0">📊 Reportes Avanzados</h1>
+                <div>
+                    <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left"></i> Volver al Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Reporte de Ventas -->
+        <div class="col-lg-6 col-md-6 mb-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="bg-primary bg-opacity-10 p-3 rounded me-3">
+                            <i class="fas fa-chart-line text-primary fa-2x"></i>
+                        </div>
+                        <div>
+                            <h5 class="card-title mb-1">Reporte de Ventas</h5>
+                            <p class="text-muted mb-0">Análisis de ventas por período</p>
+                        </div>
+                    </div>
+                    <p class="card-text">Analiza las ventas por fechas, métodos de pago y tendencias de ingresos.</p>
+                    <a href="{{ url_for('reporte_ventas') }}" class="btn btn-primary">
+                        <i class="fas fa-eye"></i> Ver Reporte
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Reporte de Ganancias -->
+        <div class="col-lg-6 col-md-6 mb-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="bg-success bg-opacity-10 p-3 rounded me-3">
+                            <i class="fas fa-dollar-sign text-success fa-2x"></i>
+                        </div>
+                        <div>
+                            <h5 class="card-title mb-1">Análisis de Ganancias</h5>
+                            <p class="text-muted mb-0">Márgenes y rentabilidad</p>
+                        </div>
+                    </div>
+                    <p class="card-text">Calcula ganancias, márgenes por producto y rentabilidad general.</p>
+                    <a href="{{ url_for('reporte_ganancias') }}" class="btn btn-success">
+                        <i class="fas fa-chart-pie"></i> Ver Análisis
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Reporte de Productos -->
+        <div class="col-lg-6 col-md-6 mb-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="bg-info bg-opacity-10 p-3 rounded me-3">
+                            <i class="fas fa-boxes text-info fa-2x"></i>
+                        </div>
+                        <div>
+                            <h5 class="card-title mb-1">Análisis de Productos</h5>
+                            <p class="text-muted mb-0">Rotación y rendimiento</p>
+                        </div>
+                    </div>
+                    <p class="card-text">Identifica productos más/menos vendidos y rotación de stock.</p>
+                    <a href="{{ url_for('reporte_productos') }}" class="btn btn-info">
+                        <i class="fas fa-chart-bar"></i> Ver Análisis
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sistema de Recomendaciones -->
+        <div class="col-lg-6 col-md-6 mb-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="bg-warning bg-opacity-10 p-3 rounded me-3">
+                            <i class="fas fa-lightbulb text-warning fa-2x"></i>
+                        </div>
+                        <div>
+                            <h5 class="card-title mb-1">Recomendaciones Inteligentes</h5>
+                            <p class="text-muted mb-0">IA para optimizar tu negocio</p>
+                        </div>
+                    </div>
+                    <p class="card-text">Recibe sugerencias inteligentes para mejorar stock y ventas.</p>
+                    <a href="{{ url_for('recomendaciones') }}" class="btn btn-warning">
+                        <i class="fas fa-magic"></i> Ver Recomendaciones
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Estadísticas Rápidas -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-tachometer-alt"></i> Estadísticas Rápidas
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3 text-center mb-3">
+                            <div class="border-end">
+                                <h3 class="text-primary mb-1" id="total-ventas">-</h3>
+                                <p class="text-muted mb-0">Ventas del Mes</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3 text-center mb-3">
+                            <div class="border-end">
+                                <h3 class="text-success mb-1" id="ingresos-mes">-</h3>
+                                <p class="text-muted mb-0">Ingresos del Mes</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3 text-center mb-3">
+                            <div class="border-end">
+                                <h3 class="text-info mb-1" id="productos-bajo-stock">-</h3>
+                                <p class="text-muted mb-0">Stock Bajo</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3 text-center mb-3">
+                            <div>
+                                <h3 class="text-warning mb-1" id="margen-promedio">-</h3>
+                                <p class="text-muted mb-0">Margen Promedio</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Cargar estadísticas rápidas
+document.addEventListener('DOMContentLoaded', function() {
+    // Aquí se pueden cargar estadísticas rápidas via AJAX
+    // Por ahora mostraremos placeholders
+    document.getElementById('total-ventas').textContent = '0';
+    document.getElementById('ingresos-mes').textContent = '$0';
+    document.getElementById('productos-bajo-stock').textContent = '0';
+    document.getElementById('margen-promedio').textContent = '0%';
+});
+</script>
+{% endblock %}

@@ -1,0 +1,421 @@
+{% extends "base.html" %}
+{% block title %}Editar Lote{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <h2>Editar Lote #{{ lote.id_lote }}</h2>
+            
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <form method="post" class="mb-5" id="formLote">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="nro_factura" class="form-label">Número de Factura *</label>
+                            <input type="text" id="nro_factura" name="nro_factura" class="form-control" value="{{ lote.nro_factura or '' }}" required>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="fecha" class="form-label">Fecha *</label>
+                            <input type="date" id="fecha" name="fecha" class="form-control" value="{{ lote.fecha }}" required>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="mb-3">
+                            <label for="id_proveedor" class="form-label">Proveedor *</label>
+                            <div class="input-group">
+                                <select id="id_proveedor" name="id_proveedor" class="form-select" required>
+                                    <option value="">Seleccione proveedor</option>
+                                    {% for proveedor in proveedores %}
+                                    <option value="{{ proveedor.id_proveedor }}" {% if proveedor.id_proveedor == lote.id_proveedor %}selected{% endif %}>
+                                        {{ proveedor.nombre }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                                <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#modalProveedor">
+                                    ➕
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="observaciones" class="form-label">Observaciones</label>
+                    <textarea id="observaciones" name="observaciones" class="form-control" rows="3">{{ lote.observaciones or '' }}</textarea>
+                </div>
+
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Productos del Lote</h5>
+                        <button type="button" class="btn btn-success btn-sm" onclick="agregarFila()">
+                            ➕ Agregar Producto
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-bordered" id="tabla_productos">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th width="35%">Producto *</th>
+                                        <th width="15%">Cantidad *</th>
+                                        <th width="15%">Precio Compra *</th>
+                                        <th width="15%">Precio Venta *</th>
+                                        <th width="20%">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for detalle in detalles %}
+                                    <tr>
+                                        <td>
+                                            <div class="input-group">
+                                                <select name="producto_id[]" class="form-select producto-select" required>
+                                                    <option value="">Seleccione producto</option>
+                                                    {% for producto in productos %}
+                                                    <option value="{{ producto.id_producto }}" 
+                                                            data-precio-compra="{{ producto.precio_compra or 0 }}"
+                                                            data-precio-venta="{{ producto.precio_venta or 0 }}"
+                                                            {% if producto.id_producto == detalle.id_producto %}selected{% endif %}>
+                                                        {{ producto.codigo }} - {{ producto.nombre }}
+                                                    </option>
+                                                    {% endfor %}
+                                                </select>
+                                                <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#modalProducto">
+                                                    ➕
+                                                </button>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <input type="number" name="cantidad[]" min="1" class="form-control cantidad-input" value="{{ detalle.cantidad }}" required>
+                                        </td>
+                                        <td>
+                                            <input type="number" name="precio_compra[]" step="0.01" min="0" class="form-control precio-compra-input" value="{{ detalle.precio_compra }}" required>
+                                        </td>
+                                        <td>
+                                            <input type="number" name="precio_venta[]" step="0.01" min="0" class="form-control precio-venta-input" value="{{ detalle.precio_venta }}" required>
+                                        </td>
+                                        <td>
+                                            <div class="btn-group" role="group">
+                                                <button type="button" class="btn btn-danger btn-sm" onclick="eliminarFila(this)" title="Eliminar fila">
+                                                    🗑️
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-4">
+                    <button type="submit" class="btn btn-primary btn-lg">
+                        💾 Actualizar Lote
+                    </button>
+                    <a href="{{ url_for('ver_lote', id_lote=lote.id_lote) }}" class="btn btn-secondary btn-lg ms-2">
+                        ❌ Cancelar
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para agregar proveedor -->
+<div class="modal fade" id="modalProveedor" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Agregar Nuevo Proveedor</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="formProveedor">
+                    <div class="mb-3">
+                        <label for="nombre_proveedor" class="form-label">Nombre del Proveedor *</label>
+                        <input type="text" id="nombre_proveedor" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="telefono_proveedor" class="form-label">Teléfono</label>
+                        <input type="text" id="telefono_proveedor" class="form-control">
+                    </div>
+                    <div class="mb-3">
+                        <label for="email_proveedor" class="form-label">Email</label>
+                        <input type="email" id="email_proveedor" class="form-control">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="guardarProveedor()">Guardar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para agregar producto -->
+<div class="modal fade" id="modalProducto" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Agregar Nuevo Producto</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="formProducto">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="nombre_producto" class="form-label">Nombre del Producto *</label>
+                                <input type="text" id="nombre_producto" class="form-control" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="categoria_producto" class="form-label">Categoría</label>
+                                <select id="categoria_producto" class="form-select">
+                                    <option value="">Sin categoría</option>
+                                    {% for categoria in categorias %}
+                                    <option value="{{ categoria.id_categoria }}">{{ categoria.nombre }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="precio_compra_producto" class="form-label">Precio de Compra *</label>
+                                <input type="number" id="precio_compra_producto" step="0.01" min="0" class="form-control" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="precio_venta_producto" class="form-label">Precio de Venta *</label>
+                                <input type="number" id="precio_venta_producto" step="0.01" min="0" class="form-control" required>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="guardarProducto()">Guardar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Variables globales
+let productosData = {{ productos | tojson }};
+let categoriasData = {{ categorias | tojson }};
+
+function agregarFila() {
+    const tabla = document.getElementById('tabla_productos').getElementsByTagName('tbody')[0];
+    const nuevaFila = tabla.rows[0].cloneNode(true);
+    
+    // Limpiar valores
+    nuevaFila.querySelectorAll('input').forEach(input => input.value = '');
+    nuevaFila.querySelector('select').selectedIndex = 0;
+    
+    // Recrear el select con los productos actualizados
+    const select = nuevaFila.querySelector('select');
+    select.innerHTML = '<option value="">Seleccione producto</option>';
+    productosData.forEach(producto => {
+        const option = document.createElement('option');
+        option.value = producto.id_producto;
+        option.textContent = `${producto.codigo} - ${producto.nombre}`;
+        option.setAttribute('data-precio-compra', producto.precio_compra || 0);
+        option.setAttribute('data-precio-venta', producto.precio_venta || 0);
+        select.appendChild(option);
+    });
+    
+    // Asegurar que el botón del modal esté presente
+    const inputGroup = nuevaFila.querySelector('.input-group');
+    if (!inputGroup.querySelector('button[data-bs-target="#modalProducto"]')) {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'btn btn-outline-secondary';
+        button.setAttribute('data-bs-toggle', 'modal');
+        button.setAttribute('data-bs-target', '#modalProducto');
+        button.textContent = '➕';
+        inputGroup.appendChild(button);
+    }
+    
+    tabla.appendChild(nuevaFila);
+    inicializarEventosFila(nuevaFila);
+}
+
+function eliminarFila(boton) {
+    const tabla = document.getElementById('tabla_productos').getElementsByTagName('tbody')[0];
+    if (tabla.rows.length > 1) {
+        boton.closest('tr').remove();
+    } else {
+        alert('Debe ingresar al menos un producto.');
+    }
+}
+
+function inicializarEventosFila(fila) {
+    const select = fila.querySelector('.producto-select');
+    const precioCompraInput = fila.querySelector('.precio-compra-input');
+    const precioVentaInput = fila.querySelector('.precio-venta-input');
+    
+    select.addEventListener('change', function() {
+        const selectedOption = this.options[this.selectedIndex];
+        if (selectedOption.value) {
+            precioCompraInput.value = selectedOption.getAttribute('data-precio-compra');
+            precioVentaInput.value = selectedOption.getAttribute('data-precio-venta');
+        }
+    });
+}
+
+// Inicializar eventos para todas las filas existentes
+document.addEventListener('DOMContentLoaded', function() {
+    const filas = document.querySelectorAll('#tabla_productos tbody tr');
+    filas.forEach(fila => inicializarEventosFila(fila));
+});
+
+// Funciones para modales
+async function guardarProveedor() {
+    const nombre = document.getElementById('nombre_proveedor').value;
+    const telefono = document.getElementById('telefono_proveedor').value;
+    const email = document.getElementById('email_proveedor').value;
+    
+    if (!nombre) {
+        alert('El nombre del proveedor es obligatorio');
+        return;
+    }
+    
+    try {
+        const response = await fetch('/api/proveedores', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                nombre: nombre,
+                telefono: telefono,
+                email: email
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            // Agregar el nuevo proveedor al select
+            const select = document.getElementById('id_proveedor');
+            const option = document.createElement('option');
+            option.value = data.proveedor.id_proveedor;
+            option.textContent = data.proveedor.nombre;
+            select.appendChild(option);
+            select.value = data.proveedor.id_proveedor;
+            
+            // Cerrar modal y limpiar formulario
+            bootstrap.Modal.getInstance(document.getElementById('modalProveedor')).hide();
+            document.getElementById('formProveedor').reset();
+            
+            alert('Proveedor agregado correctamente');
+        } else {
+            alert('Error: ' + data.message);
+        }
+    } catch (error) {
+        alert('Error al guardar el proveedor');
+        console.error(error);
+    }
+}
+
+async function guardarProducto() {
+    const nombre = document.getElementById('nombre_producto').value;
+    const categoria = document.getElementById('categoria_producto').value;
+    const precioCompra = document.getElementById('precio_compra_producto').value;
+    const precioVenta = document.getElementById('precio_venta_producto').value;
+    
+    if (!nombre || !precioCompra || !precioVenta) {
+        alert('Los campos marcados con * son obligatorios');
+        return;
+    }
+    
+    try {
+        const response = await fetch('/api/productos', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                nombre: nombre,
+                categoria_id: categoria || null,
+                precio_compra: precioCompra,
+                precio_venta: precioVenta
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            // Agregar el nuevo producto a la lista y actualizar todos los selects
+            productosData.push(data.producto);
+            
+            const selects = document.querySelectorAll('.producto-select');
+            selects.forEach(select => {
+                const option = document.createElement('option');
+                option.value = data.producto.id_producto;
+                option.textContent = `${data.producto.codigo} - ${data.producto.nombre}`;
+                option.setAttribute('data-precio-compra', data.producto.precio_compra);
+                option.setAttribute('data-precio-venta', data.producto.precio_venta);
+                select.appendChild(option);
+            });
+            
+            // Cerrar modal y limpiar formulario
+            bootstrap.Modal.getInstance(document.getElementById('modalProducto')).hide();
+            document.getElementById('formProducto').reset();
+            
+            alert('Producto agregado correctamente');
+        } else {
+            alert('Error: ' + data.message);
+        }
+    } catch (error) {
+        alert('Error al guardar el producto');
+        console.error(error);
+    }
+}
+
+// Validación del formulario
+document.getElementById('formLote').addEventListener('submit', function(e) {
+    const productos = document.querySelectorAll('select[name="producto_id[]"]');
+    const productosSeleccionados = new Set();
+    let hayDuplicados = false;
+    
+    productos.forEach(select => {
+        if (select.value) {
+            if (productosSeleccionados.has(select.value)) {
+                hayDuplicados = true;
+            } else {
+                productosSeleccionados.add(select.value);
+            }
+        }
+    });
+    
+    if (hayDuplicados) {
+        e.preventDefault();
+        alert('No puede agregar el mismo producto más de una vez en el mismo lote.');
+    }
+});
+</script>
+{% endblock %}

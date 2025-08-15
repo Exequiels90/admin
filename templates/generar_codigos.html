@@ -1,0 +1,331 @@
+{% extends "base.html" %}
+{% block title %}Generar Códigos de Barras{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <h2>🏷️ Generar Códigos de Barras</h2>
+            
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <div class="row">
+                <!-- Lista de Productos -->
+                <div class="col-md-8">
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">📦 Productos Disponibles</h5>
+                            <div class="input-group" style="width: 300px;">
+                                <input type="text" id="buscarProducto" class="form-control" placeholder="Buscar productos...">
+                                <button class="btn btn-outline-secondary" type="button" onclick="limpiarBusqueda()">
+                                    🗑️
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive" style="max-height: 500px; overflow-y: auto;">
+                                <table class="table table-hover" id="tablaProductos">
+                                    <thead class="table-light sticky-top">
+                                        <tr>
+                                            <th>Código</th>
+                                            <th>Producto</th>
+                                            <th>Categoría</th>
+                                            <th class="text-end">Precio</th>
+                                            <th class="text-center">Cantidad</th>
+                                            <th class="text-center">Acción</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for producto in productos %}
+                                        <tr class="producto-fila" data-codigo="{{ producto.codigo }}" data-nombre="{{ producto.nombre.lower() }}">
+                                            <td><code>{{ producto.codigo }}</code></td>
+                                            <td>{{ producto.nombre }}</td>
+                                            <td>{{ producto.categoria or 'Sin categoría' }}</td>
+                                            <td class="text-end">${{ "%.2f"|format(producto.precio_venta) }}</td>
+                                            <td class="text-center">
+                                                <input type="number" 
+                                                       class="form-control form-control-sm cantidad-input" 
+                                                       value="1" 
+                                                       min="1" 
+                                                       max="100"
+                                                       style="width: 80px;">
+                                            </td>
+                                            <td class="text-center">
+                                                <button type="button" 
+                                                        class="btn btn-success btn-sm"
+                                                        onclick="agregarAlCarrito({{ producto.id_producto }}, '{{ producto.codigo }}', '{{ producto.nombre }}', {{ producto.precio_venta }})">
+                                                    ➕ Agregar
+                                                </button>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Carrito -->
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">🛒 Carrito de Códigos</h5>
+                            <button type="button" class="btn btn-outline-danger btn-sm" onclick="limpiarCarrito()">
+                                🗑️ Limpiar
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            <div id="carritoVacio" class="text-center py-4">
+                                <h6 class="text-muted">Carrito vacío</h6>
+                                <p class="text-muted small">Seleccione productos para generar códigos</p>
+                            </div>
+                            
+                            <div id="carritoProductos" style="display: none;">
+                                <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                                    <table class="table table-sm" id="tablaCarrito">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>Producto</th>
+                                                <th class="text-center">Cant.</th>
+                                                <th class="text-center">Acción</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="carritoBody">
+                                        </tbody>
+                                    </table>
+                                </div>
+                                
+                                <hr>
+                                
+                                <div class="d-grid gap-2">
+                                    <button type="button" class="btn btn-primary" onclick="generarPDF()">
+                                        🖨️ Generar PDF
+                                    </button>
+                                    <button type="button" class="btn btn-outline-secondary" onclick="vistaPrevia()">
+                                        👁️ Vista Previa
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Vista Previa -->
+<div class="modal fade" id="modalVistaPrevia" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Vista Previa de Códigos de Barras</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="vistaPreviaContenido" class="row">
+                    <!-- Los códigos se generarán aquí -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                <button type="button" class="btn btn-primary" onclick="generarPDF()">Generar PDF</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Variables globales
+let carrito = [];
+let productosData = {{ productos | tojson }};
+
+// Función para buscar productos
+document.getElementById('buscarProducto').addEventListener('input', function() {
+    const busqueda = this.value.toLowerCase();
+    const filas = document.querySelectorAll('.producto-fila');
+    
+    filas.forEach(fila => {
+        const codigo = fila.getAttribute('data-codigo').toLowerCase();
+        const nombre = fila.getAttribute('data-nombre');
+        
+        if (codigo.includes(busqueda) || nombre.includes(busqueda)) {
+            fila.style.display = '';
+        } else {
+            fila.style.display = 'none';
+        }
+    });
+});
+
+function limpiarBusqueda() {
+    document.getElementById('buscarProducto').value = '';
+    document.querySelectorAll('.producto-fila').forEach(fila => {
+        fila.style.display = '';
+    });
+}
+
+function agregarAlCarrito(idProducto, codigo, nombre, precio) {
+    const cantidad = parseInt(document.querySelector(`tr[data-codigo="${codigo}"] .cantidad-input`).value);
+    
+    // Verificar si ya existe en el carrito
+    const index = carrito.findIndex(item => item.id === idProducto);
+    
+    if (index !== -1) {
+        carrito[index].cantidad += cantidad;
+    } else {
+        carrito.push({
+            id: idProducto,
+            codigo: codigo,
+            nombre: nombre,
+            precio: precio,
+            cantidad: cantidad
+        });
+    }
+    
+    actualizarCarrito();
+    mostrarNotificacion(`${nombre} agregado al carrito`);
+}
+
+function actualizarCarrito() {
+    const carritoVacio = document.getElementById('carritoVacio');
+    const carritoProductos = document.getElementById('carritoProductos');
+    const carritoBody = document.getElementById('carritoBody');
+    
+    if (carrito.length === 0) {
+        carritoVacio.style.display = 'block';
+        carritoProductos.style.display = 'none';
+    } else {
+        carritoVacio.style.display = 'none';
+        carritoProductos.style.display = 'block';
+        
+        carritoBody.innerHTML = '';
+        carrito.forEach((item, index) => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>
+                    <small><code>${item.codigo}</code></small><br>
+                    <small>${item.nombre}</small>
+                </td>
+                <td class="text-center">
+                    <input type="number" 
+                           class="form-control form-control-sm" 
+                           value="${item.cantidad}" 
+                           min="1" 
+                           max="100"
+                           style="width: 60px;"
+                           onchange="actualizarCantidad(${index}, this.value)">
+                </td>
+                <td class="text-center">
+                    <button type="button" class="btn btn-danger btn-sm" onclick="eliminarDelCarrito(${index})">
+                        🗑️
+                    </button>
+                </td>
+            `;
+            carritoBody.appendChild(row);
+        });
+    }
+}
+
+function actualizarCantidad(index, nuevaCantidad) {
+    carrito[index].cantidad = parseInt(nuevaCantidad);
+}
+
+function eliminarDelCarrito(index) {
+    carrito.splice(index, 1);
+    actualizarCarrito();
+}
+
+function limpiarCarrito() {
+    carrito = [];
+    actualizarCarrito();
+}
+
+function vistaPrevia() {
+    if (carrito.length === 0) {
+        alert('El carrito está vacío');
+        return;
+    }
+    
+    const contenido = document.getElementById('vistaPreviaContenido');
+    contenido.innerHTML = '';
+    
+    carrito.forEach(item => {
+        for (let i = 0; i < item.cantidad; i++) {
+            const codigoDiv = document.createElement('div');
+            codigoDiv.className = 'col-md-3 col-sm-4 col-6 mb-3';
+            codigoDiv.innerHTML = `
+                <div class="border p-2 text-center" style="min-height: 120px;">
+                    <div class="mb-2">
+                        <small class="text-muted">${item.codigo}</small>
+                    </div>
+                    <div class="mb-2">
+                        <strong>$${item.precio.toFixed(2)}</strong>
+                    </div>
+                    <div class="mb-2">
+                        <small>${item.nombre}</small>
+                    </div>
+                    <div class="bg-light p-1">
+                        <small class="text-muted">[CÓDIGO DE BARRAS]</small>
+                    </div>
+                </div>
+            `;
+            contenido.appendChild(codigoDiv);
+        }
+    });
+    
+    new bootstrap.Modal(document.getElementById('modalVistaPrevia')).show();
+}
+
+function generarPDF() {
+    if (carrito.length === 0) {
+        alert('El carrito está vacío');
+        return;
+    }
+    
+    // Crear formulario temporal para enviar datos
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = '{{ url_for("generar_pdf_codigos") }}';
+    
+    const input = document.createElement('input');
+    input.type = 'hidden';
+    input.name = 'carrito';
+    input.value = JSON.stringify(carrito);
+    
+    form.appendChild(input);
+    document.body.appendChild(form);
+    form.submit();
+    document.body.removeChild(form);
+}
+
+function mostrarNotificacion(mensaje) {
+    // Crear notificación temporal
+    const notificacion = document.createElement('div');
+    notificacion.className = 'alert alert-success alert-dismissible fade show position-fixed';
+    notificacion.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    notificacion.innerHTML = `
+        ${mensaje}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.appendChild(notificacion);
+    
+    // Remover después de 3 segundos
+    setTimeout(() => {
+        if (notificacion.parentNode) {
+            notificacion.parentNode.removeChild(notificacion);
+        }
+    }, 3000);
+}
+</script>
+{% endblock %}

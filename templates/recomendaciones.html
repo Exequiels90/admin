@@ -1,0 +1,323 @@
+{% extends "base.html" %}
+
+{% block title %}Recomendaciones Inteligentes{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0">🤖 Recomendaciones Inteligentes</h1>
+                <div>
+                    <a href="{{ url_for('reportes') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left"></i> Volver a Reportes
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alertas de Stock Bajo -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm border-warning">
+                <div class="card-header bg-warning bg-opacity-10">
+                    <h5 class="mb-0">
+                        <i class="fas fa-exclamation-triangle text-warning"></i> 
+                        Productos con Stock Bajo
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if stock_bajo %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Producto</th>
+                                    <th>Código</th>
+                                    <th>Categoría</th>
+                                    <th class="text-center">Stock Actual</th>
+                                    <th class="text-center">Vendido (30 días)</th>
+                                    <th class="text-center">Promedio Diario</th>
+                                    <th class="text-center">Nivel</th>
+                                    <th class="text-center">Recomendación</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for producto in stock_bajo %}
+                                <tr>
+                                    <td><strong>{{ producto[0] }}</strong></td>
+                                    <td><code>{{ producto[1] }}</code></td>
+                                    <td>{{ producto[2] or 'Sin categoría' }}</td>
+                                    <td class="text-center">
+                                        <span class="badge bg-danger">{{ producto[3] }}</span>
+                                    </td>
+                                    <td class="text-center">{{ producto[4] }}</td>
+                                    <td class="text-center">{{ producto[5] }}</td>
+                                    <td class="text-center">
+                                        {% if producto[6] == 'CRÍTICO' %}
+                                        <span class="badge bg-danger">CRÍTICO</span>
+                                        {% elif producto[6] == 'BAJO' %}
+                                        <span class="badge bg-warning">BAJO</span>
+                                        {% else %}
+                                        <span class="badge bg-info">NORMAL</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-center">
+                                        {% if producto[6] == 'CRÍTICO' %}
+                                        <span class="text-danger fw-bold">¡REPONER URGENTE!</span>
+                                        {% elif producto[6] == 'BAJO' %}
+                                        <span class="text-warning">Considerar reponer</span>
+                                        {% else %}
+                                        <span class="text-info">Monitorear</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-3">
+                        <i class="fas fa-check-circle fa-2x text-success mb-2"></i>
+                        <p class="text-success mb-0">¡Excelente! No hay productos con stock crítico.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Categorías con Mayor Demanda -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm border-info">
+                <div class="card-header bg-info bg-opacity-10">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-bar text-info"></i> 
+                        Categorías con Mayor Demanda
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if categorias_demandadas %}
+                    <div class="row">
+                        {% for categoria in categorias_demandadas %}
+                        <div class="col-md-6 col-lg-4 mb-3">
+                            <div class="card h-100 border-info">
+                                <div class="card-body">
+                                    <h6 class="card-title text-info">{{ categoria[0] }}</h6>
+                                    <div class="row text-center">
+                                        <div class="col-4">
+                                            <h5 class="text-primary mb-0">{{ categoria[1] }}</h5>
+                                            <small class="text-muted">Productos</small>
+                                        </div>
+                                        <div class="col-4">
+                                            <h5 class="text-success mb-0">{{ categoria[2] }}</h5>
+                                            <small class="text-muted">Vendidos</small>
+                                        </div>
+                                        <div class="col-4">
+                                            <h5 class="text-warning mb-0">{{ categoria[4] }}</h5>
+                                            <small class="text-muted">Prom/Día</small>
+                                        </div>
+                                    </div>
+                                    <div class="mt-2">
+                                        <small class="text-muted">
+                                            Promedio por producto: {{ categoria[3] }} unidades
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-3">
+                        <i class="fas fa-chart-bar fa-2x text-muted mb-2"></i>
+                        <p class="text-muted mb-0">No hay datos suficientes para analizar categorías.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Productos con Alto Margen y Baja Venta -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm border-success">
+                <div class="card-header bg-success bg-opacity-10">
+                    <h5 class="mb-0">
+                        <i class="fas fa-lightbulb text-success"></i> 
+                        Oportunidades de Alto Margen
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if alto_margen_baja_venta %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Producto</th>
+                                    <th>Código</th>
+                                    <th>Categoría</th>
+                                    <th class="text-center">Stock</th>
+                                    <th class="text-end">Precio Venta</th>
+                                    <th class="text-end">Precio Compra</th>
+                                    <th class="text-center">Margen %</th>
+                                    <th class="text-center">Total Vendido</th>
+                                    <th class="text-center">Recomendación</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for producto in alto_margen_baja_venta %}
+                                <tr>
+                                    <td><strong>{{ producto[0] }}</strong></td>
+                                    <td><code>{{ producto[1] }}</code></td>
+                                    <td>{{ producto[2] or 'Sin categoría' }}</td>
+                                    <td class="text-center">
+                                        <span class="badge bg-info">{{ producto[3] }}</span>
+                                    </td>
+                                    <td class="text-end">${{ "%.2f"|format(producto[4]) }}</td>
+                                    <td class="text-end">${{ "%.2f"|format(producto[5]) }}</td>
+                                    <td class="text-center">
+                                        <span class="badge bg-success">{{ "%.1f"|format(producto[6]) }}%</span>
+                                    </td>
+                                    <td class="text-center">{{ producto[7] }}</td>
+                                    <td class="text-center">
+                                        <span class="text-success fw-bold">¡PROMOCIONAR!</span>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-3">
+                        <i class="fas fa-lightbulb fa-2x text-muted mb-2"></i>
+                        <p class="text-muted mb-0">No se encontraron productos con alto margen y baja venta.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tendencia Mensual -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm border-primary">
+                <div class="card-header bg-primary bg-opacity-10">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-line text-primary"></i> 
+                        Tendencia de Ventas (Últimos 3 Meses)
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if tendencia_mensual %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Mes</th>
+                                    <th class="text-center">Total Ventas</th>
+                                    <th class="text-end">Ingresos</th>
+                                    <th class="text-center">Productos Vendidos</th>
+                                    <th class="text-center">Promedio por Venta</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for mes in tendencia_mensual %}
+                                <tr>
+                                    <td><strong>{{ mes[0] }}</strong></td>
+                                    <td class="text-center">
+                                        <span class="badge bg-primary">{{ mes[1] }}</span>
+                                    </td>
+                                    <td class="text-end fw-bold">${{ "%.2f"|format(mes[2]) }}</td>
+                                    <td class="text-center">{{ mes[3] }}</td>
+                                    <td class="text-center">
+                                        ${{ "%.2f"|format(mes[2] / mes[1] if mes[1] > 0 else 0) }}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-3">
+                        <i class="fas fa-chart-line fa-2x text-muted mb-2"></i>
+                        <p class="text-muted mb-0">No hay datos suficientes para mostrar tendencias.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Resumen de Recomendaciones -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card shadow-sm border-warning">
+                <div class="card-header bg-warning bg-opacity-10">
+                    <h5 class="mb-0">
+                        <i class="fas fa-clipboard-list text-warning"></i> 
+                        Resumen de Acciones Recomendadas
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="text-danger">
+                                <i class="fas fa-exclamation-triangle"></i> Acciones Urgentes
+                            </h6>
+                            <ul class="list-unstyled">
+                                {% if stock_bajo %}
+                                    {% for producto in stock_bajo %}
+                                        {% if producto[6] == 'CRÍTICO' %}
+                                        <li class="mb-2">
+                                            <i class="fas fa-arrow-right text-danger"></i>
+                                            <strong>Reponer stock de {{ producto[0] }}</strong> - Solo quedan {{ producto[3] }} unidades
+                                        </li>
+                                        {% endif %}
+                                    {% endfor %}
+                                {% else %}
+                                <li class="text-success">
+                                    <i class="fas fa-check"></i> No hay acciones urgentes
+                                </li>
+                                {% endif %}
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-success">
+                                <i class="fas fa-lightbulb"></i> Oportunidades
+                            </h6>
+                            <ul class="list-unstyled">
+                                {% if alto_margen_baja_venta %}
+                                    {% for producto in alto_margen_baja_venta[:3] %}
+                                    <li class="mb-2">
+                                        <i class="fas fa-arrow-right text-success"></i>
+                                        <strong>Promocionar {{ producto[0] }}</strong> - Margen del {{ "%.1f"|format(producto[6]) }}%
+                                    </li>
+                                    {% endfor %}
+                                {% else %}
+                                <li class="text-muted">
+                                    <i class="fas fa-info-circle"></i> No hay oportunidades identificadas
+                                </li>
+                                {% endif %}
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-refresh cada 5 minutos para mantener datos actualizados
+    setTimeout(function() {
+        location.reload();
+    }, 300000); // 5 minutos
+});
+</script>
+{% endblock %}
