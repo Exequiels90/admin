@@ -1,0 +1,870 @@
+{% extends "base.html" %}
+
+{% block title %}Nuevo Lote{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0">📦 Nuevo Lote</h1>
+                <div>
+                    <a href="{{ url_for('listar_lotes') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left"></i> Volver a Lotes
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <form method="POST" id="formNuevoLote">
+        <!-- Información del Lote -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card shadow-sm">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-info-circle text-primary"></i> 
+                            Información del Lote
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-3 mb-3">
+                                <label for="numero_lote" class="form-label">Número de Lote</label>
+                                <input type="text" class="form-control" id="numero_lote" name="numero_lote" 
+                                       value="{{ numero_lote }}" readonly>
+                                <div class="form-text">Generado automáticamente</div>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label for="nro_factura" class="form-label">Número de Factura</label>
+                                <input type="text" class="form-control" id="nro_factura" name="nro_factura" required>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label for="id_proveedor" class="form-label">Proveedor</label>
+                                <div class="input-group">
+                                    <select class="form-select" id="id_proveedor" name="id_proveedor" required>
+                                        <option value="">Seleccionar proveedor...</option>
+                                        {% for proveedor in proveedores %}
+                                        <option value="{{ proveedor.id_proveedor }}">{{ proveedor.nombre }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#modalNuevoProveedor">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label for="fecha_factura" class="form-label">Fecha de Factura</label>
+                                <input type="date" class="form-control" id="fecha_factura" name="fecha_factura" 
+                                       value="{{ today }}" required>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-12">
+                                <label for="observaciones" class="form-label">Observaciones</label>
+                                <textarea class="form-control" id="observaciones" name="observaciones" rows="2"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Productos del Lote -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card shadow-sm">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="fas fa-boxes text-success"></i> 
+                            Productos del Lote
+                        </h5>
+                        <div>
+                            <button type="button" class="btn btn-outline-success me-2" onclick="abrirModalAdministracionCategorias()">
+                                <i class="fas fa-cogs"></i> Administrar Categorías
+                            </button>
+                            <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#modalAgregarProducto">
+                                <i class="fas fa-plus"></i> Agregar Producto
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover" id="tablaProductos">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th style="width: 5%;">#</th>
+                                        <th style="width: 20%;">Producto Existente</th>
+                                        <th style="width: 10%;">Categoría</th>
+                                        <th style="width: 10%;">Subcategoría</th>
+                                        <th style="width: 10%;">Marca</th>
+                                        <th style="width: 10%;">Versión</th>
+                                        <th style="width: 5%;">Pesable</th>
+                                        <th style="width: 8%;">Cantidad</th>
+                                        <th style="width: 10%;">Precio Compra</th>
+                                        <th style="width: 10%;">Precio Venta</th>
+                                        <th style="width: 2%;">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tbodyProductos">
+                                    <!-- Los productos se agregarán dinámicamente aquí -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Botones de Acción -->
+        <div class="row">
+            <div class="col-12">
+                <div class="d-flex justify-content-end gap-2">
+                    <button type="button" class="btn btn-outline-secondary" onclick="window.history.back()">
+                        <i class="fas fa-times"></i> Cancelar
+                    </button>
+                    <button type="button" class="btn btn-primary" onclick="crearLote()">
+                        <i class="fas fa-save"></i> Crear Lote
+                    </button>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Modal Agregar Producto -->
+<div class="modal fade" id="modalAgregarProducto" tabindex="-1" aria-labelledby="modalAgregarProductoLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalAgregarProductoLabel">
+                    <i class="fas fa-plus text-success"></i> Agregar Producto al Lote
+                    <span class="badge bg-success ms-2" id="contadorProductos">0 productos agregados</span>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="formAgregarProducto">
+                    <!-- Paso 1: Tipo de Producto -->
+                    <div class="mb-4">
+                        <h6 class="text-primary mb-3">
+                            <i class="fas fa-box"></i> Paso 1: Tipo de Producto
+                        </h6>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="tipo_producto" id="producto_existente" value="existente" checked>
+                            <label class="form-check-label" for="producto_existente">
+                                <i class="fas fa-search"></i> Producto Existente
+                            </label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="tipo_producto" id="producto_nuevo" value="nuevo">
+                            <label class="form-check-label" for="producto_nuevo">
+                                <i class="fas fa-plus"></i> Producto Nuevo
+                            </label>
+                        </div>
+                        <div class="mt-2">
+                            <button type="button" class="btn btn-sm btn-outline-info" onclick="testFunciones()">
+                                <i class="fas fa-bug"></i> Test Funciones
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Producto Existente -->
+                    <div id="seccion_producto_existente" class="mb-4">
+                        <div class="mb-3">
+                            <label for="producto_existente_select" class="form-label">
+                                <i class="fas fa-search"></i> Seleccionar Producto Existente
+                            </label>
+                            <select class="form-select" id="producto_existente_select" name="producto_existente">
+                                <option value="">Buscar producto...</option>
+                                {% for producto in productos_existentes %}
+                                <option value="{{ producto.id_producto }}" 
+                                        data-categoria="{{ producto.categoria }}"
+                                        data-subcategoria="{{ producto.subcategoria }}"
+                                        data-marca="{{ producto.marca_nombre }}"
+                                        data-version="{{ producto.version }}">
+                                    {{ producto.codigo }} - {{ producto.nombre }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Producto Nuevo -->
+                    <div id="seccion_producto_nuevo" class="mb-4" style="display: none;">
+                        <h6 class="text-success mb-3">
+                            <i class="fas fa-cogs"></i> Configuración del Producto
+                        </h6>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="categoria_select" class="form-label">
+                                    <i class="fas fa-folder"></i> Categoría
+                                </label>
+                                <div class="input-group">
+                                    <select class="form-select" id="categoria_select" name="categoria_id">
+                                        <option value="">Seleccionar categoría...</option>
+                                        {% for categoria in categorias %}
+                                        <option value="{{ categoria.id_categoria }}">{{ categoria.nombre }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <button type="button" class="btn btn-outline-primary" onclick="abrirModalCategoria()">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="subcategoria_select" class="form-label">
+                                    <i class="fas fa-folder-open"></i> Subcategoría
+                                </label>
+                                <div class="input-group">
+                                    <select class="form-select" id="subcategoria_select" name="subcategoria_id">
+                                        <option value="">Seleccionar subcategoría...</option>
+                                    </select>
+                                    <button type="button" class="btn btn-outline-success" onclick="abrirModalSubcategoria()">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="marca_select" class="form-label">
+                                    <i class="fas fa-tag"></i> Marca
+                                </label>
+                                <div class="input-group">
+                                    <select class="form-select" id="marca_select" name="marca_id">
+                                        <option value="">Seleccionar marca...</option>
+                                    </select>
+                                    <button type="button" class="btn btn-outline-warning" onclick="abrirModalMarca()">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="version_select" class="form-label">
+                                    <i class="fas fa-cog"></i> Versión
+                                </label>
+                                <div class="input-group">
+                                    <select class="form-select" id="version_select" name="version_id">
+                                        <option value="">Seleccionar versión...</option>
+                                    </select>
+                                    <button type="button" class="btn btn-outline-info" onclick="abrirModalVersion()">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Paso 2: Configuración del Producto -->
+                    <div class="mb-4">
+                        <h6 class="text-warning mb-3">
+                            <i class="fas fa-cog"></i> Paso 2: Configuración del Producto
+                        </h6>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="es_pesable" name="es_pesable">
+                                    <label class="form-check-label" for="es_pesable">
+                                        <i class="fas fa-weight-hanging"></i> Producto Pesable
+                                    </label>
+                                    <div class="form-text">Marcar si el producto se vende por peso</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="cantidad_producto" class="form-label">
+                                    <i class="fas fa-hashtag"></i> Cantidad
+                                </label>
+                                <input type="number" class="form-control" id="cantidad_producto" name="cantidad" 
+                                       value="1" min="1" step="1" required>
+                                <small class="text-muted" id="unidad_text">unidades</small>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-12 mb-3">
+                                <label for="codigo_producto" class="form-label">
+                                    <i class="fas fa-barcode"></i> Código
+                                </label>
+                                <input type="text" class="form-control" id="codigo_producto" name="codigo" 
+                                       placeholder="Se generará automáticamente" readonly>
+                                <div class="form-text">Se generará automáticamente</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Paso 3: Precios -->
+                    <div class="mb-4">
+                        <h6 class="text-success mb-3">
+                            <i class="fas fa-dollar-sign"></i> Paso 3: Precios
+                        </h6>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="precio_compra_producto" class="form-label">
+                                    <i class="fas fa-shopping-cart"></i> Precio de Compra
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text">$</span>
+                                    <input type="number" class="form-control" id="precio_compra_producto" 
+                                           name="precio_compra" min="0" step="0.01" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="precio_venta_producto" class="form-label">
+                                    <i class="fas fa-tag"></i> Precio de Venta
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text">$</span>
+                                    <input type="number" class="form-control" id="precio_venta_producto" 
+                                           name="precio_venta" min="0" step="0.01" required>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times"></i> Cancelar
+                </button>
+                <button type="button" class="btn btn-success" onclick="agregarProductoAlLote()">
+                    <i class="fas fa-plus"></i> Agregar al Lote
+                </button>
+                <button type="button" class="btn btn-primary" onclick="cerrarModalAgregarProducto()">
+                    <i class="fas fa-check"></i> Terminar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Otros modales aquí... -->
+
+<script>
+// Variables globales
+let contadorFilas = 0;
+let productos = [];
+let categorias = [];
+let subcategorias = [];
+let marcas = [];
+let versiones = [];
+let productosExistentes = [];
+
+// Funciones globales para mostrar/ocultar secciones
+function mostrarProductoExistente() {
+    console.log('=== MOSTRAR PRODUCTO EXISTENTE ===');
+    const seccionExistente = document.getElementById('seccion_producto_existente');
+    const seccionNuevo = document.getElementById('seccion_producto_nuevo');
+    
+    if (seccionExistente) {
+        seccionExistente.style.display = 'block';
+        console.log('✅ Sección existente mostrada');
+    }
+    if (seccionNuevo) {
+        seccionNuevo.style.display = 'none';
+        console.log('❌ Sección nuevo ocultada');
+    }
+}
+
+function mostrarProductoNuevo() {
+    console.log('=== MOSTRAR PRODUCTO NUEVO ===');
+    const seccionExistente = document.getElementById('seccion_producto_existente');
+    const seccionNuevo = document.getElementById('seccion_producto_nuevo');
+    
+    console.log('Sección existente encontrada:', !!seccionExistente);
+    console.log('Sección nuevo encontrada:', !!seccionNuevo);
+    
+    if (seccionExistente) {
+        seccionExistente.style.display = 'none';
+        console.log('❌ Sección existente ocultada');
+    }
+    if (seccionNuevo) {
+        seccionNuevo.style.display = 'block';
+        console.log('✅ Sección nuevo mostrada');
+    } else {
+        console.error('ERROR: No se encontró la sección de producto nuevo');
+    }
+}
+
+// Función de test
+function testFunciones() {
+    console.log('=== TEST FUNCIONES ===');
+    console.log('mostrarProductoExistente disponible:', typeof mostrarProductoExistente);
+    console.log('mostrarProductoNuevo disponible:', typeof mostrarProductoNuevo);
+    
+    if (typeof mostrarProductoNuevo === 'function') {
+        console.log('✅ Función mostrarProductoNuevo está disponible');
+        mostrarProductoNuevo();
+    } else {
+        console.error('❌ Función mostrarProductoNuevo NO está disponible');
+    }
+}
+
+// Configuración cuando el DOM está listo
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('=== DOM CARGADO ===');
+    
+    // Configurar radio buttons
+    const productoExistenteRadio = document.getElementById('producto_existente');
+    const productoNuevoRadio = document.getElementById('producto_nuevo');
+    
+    if (productoExistenteRadio) {
+        productoExistenteRadio.addEventListener('change', function() {
+            if (this.checked) {
+                mostrarProductoExistente();
+            }
+        });
+    }
+    
+    if (productoNuevoRadio) {
+        productoNuevoRadio.addEventListener('change', function() {
+            if (this.checked) {
+                mostrarProductoNuevo();
+            }
+        });
+    }
+    
+    // Configurar estado inicial
+    if (productoExistenteRadio && productoExistenteRadio.checked) {
+        mostrarProductoExistente();
+    }
+    
+    // Manejar producto pesable
+    const esPesableCheckbox = document.getElementById('es_pesable');
+    if (esPesableCheckbox) {
+        esPesableCheckbox.addEventListener('change', function() {
+            const cantidadInput = document.getElementById('cantidad_producto');
+            const unidadText = document.getElementById('unidad_text');
+            
+            if (this.checked) {
+                cantidadInput.min = '0.001';
+                cantidadInput.step = '0.001';
+                cantidadInput.placeholder = '0.000';
+                unidadText.textContent = 'kg';
+            } else {
+                cantidadInput.min = '1';
+                cantidadInput.step = '1';
+                cantidadInput.placeholder = 'Cant.';
+                unidadText.textContent = 'unidades';
+            }
+        });
+    }
+    
+    // Cargar subcategorías cuando se selecciona categoría
+    const categoriaSelect = document.getElementById('categoria_select');
+    if (categoriaSelect) {
+        categoriaSelect.addEventListener('change', function() {
+            cargarSubcategoriasModal(this.value);
+        });
+    }
+    
+    // Cargar marcas cuando se selecciona subcategoría
+    const subcategoriaSelect = document.getElementById('subcategoria_select');
+    if (subcategoriaSelect) {
+        subcategoriaSelect.addEventListener('change', function() {
+            cargarMarcasModal(this.value);
+        });
+    }
+    
+    // Cargar versiones cuando se selecciona marca
+    const marcaSelect = document.getElementById('marca_select');
+    if (marcaSelect) {
+        marcaSelect.addEventListener('change', function() {
+            cargarVersionesModal(this.value);
+        });
+    }
+});
+
+// Configuración cuando se abre el modal
+document.getElementById('modalAgregarProducto').addEventListener('show.bs.modal', function() {
+    console.log('=== MODAL ABIERTO ===');
+    
+    // Configurar estado inicial del modal
+    const productoExistenteRadio = document.getElementById('producto_existente');
+    if (productoExistenteRadio && productoExistenteRadio.checked) {
+        mostrarProductoExistente();
+    }
+});
+
+// Funciones para cargar datos
+function cargarSubcategoriasModal(categoriaId) {
+    console.log('Cargando subcategorías para categoría:', categoriaId);
+    
+    if (!categoriaId) {
+        // Limpiar subcategorías si no hay categoría seleccionada
+        const subcategoriaSelect = document.getElementById('subcategoria_select');
+        const marcaSelect = document.getElementById('marca_select');
+        const versionSelect = document.getElementById('version_select');
+        
+        if (subcategoriaSelect) {
+            subcategoriaSelect.innerHTML = '<option value="">Seleccionar subcategoría...</option>';
+        }
+        if (marcaSelect) {
+            marcaSelect.innerHTML = '<option value="">Seleccionar marca...</option>';
+        }
+        if (versionSelect) {
+            versionSelect.innerHTML = '<option value="">Seleccionar versión...</option>';
+        }
+        return;
+    }
+    
+    fetch(`/api/subcategorias/${categoriaId}`)
+        .then(response => response.json())
+        .then(data => {
+            const subcategoriaSelect = document.getElementById('subcategoria_select');
+            if (subcategoriaSelect) {
+                subcategoriaSelect.innerHTML = '<option value="">Seleccionar subcategoría...</option>';
+                data.forEach(subcategoria => {
+                    const option = document.createElement('option');
+                    option.value = subcategoria.id_subcategoria;
+                    option.textContent = subcategoria.nombre;
+                    subcategoriaSelect.appendChild(option);
+                });
+                console.log('✅ Subcategorías cargadas:', data.length);
+            }
+            
+            // Limpiar marcas y versiones
+            const marcaSelect = document.getElementById('marca_select');
+            const versionSelect = document.getElementById('version_select');
+            if (marcaSelect) {
+                marcaSelect.innerHTML = '<option value="">Seleccionar marca...</option>';
+            }
+            if (versionSelect) {
+                versionSelect.innerHTML = '<option value="">Seleccionar versión...</option>';
+            }
+        })
+        .catch(error => {
+            console.error('❌ Error cargando subcategorías:', error);
+        });
+}
+
+function cargarMarcasModal(subcategoriaId) {
+    console.log('Cargando marcas para subcategoría:', subcategoriaId);
+    
+    if (!subcategoriaId) {
+        // Limpiar marcas si no hay subcategoría seleccionada
+        const marcaSelect = document.getElementById('marca_select');
+        const versionSelect = document.getElementById('version_select');
+        
+        if (marcaSelect) {
+            marcaSelect.innerHTML = '<option value="">Seleccionar marca...</option>';
+        }
+        if (versionSelect) {
+            versionSelect.innerHTML = '<option value="">Seleccionar versión...</option>';
+        }
+        return;
+    }
+    
+    fetch(`/api/marcas/${subcategoriaId}`)
+        .then(response => response.json())
+        .then(data => {
+            const marcaSelect = document.getElementById('marca_select');
+            if (marcaSelect) {
+                marcaSelect.innerHTML = '<option value="">Seleccionar marca...</option>';
+                data.forEach(marca => {
+                    const option = document.createElement('option');
+                    option.value = marca.id_marca;
+                    option.textContent = marca.nombre;
+                    marcaSelect.appendChild(option);
+                });
+                console.log('✅ Marcas cargadas:', data.length);
+            }
+            
+            // Limpiar versiones
+            const versionSelect = document.getElementById('version_select');
+            if (versionSelect) {
+                versionSelect.innerHTML = '<option value="">Seleccionar versión...</option>';
+            }
+        })
+        .catch(error => {
+            console.error('❌ Error cargando marcas:', error);
+        });
+}
+
+function cargarVersionesModal(marcaId) {
+    console.log('Cargando versiones para marca:', marcaId);
+    
+    if (!marcaId) {
+        // Limpiar versiones si no hay marca seleccionada
+        const versionSelect = document.getElementById('version_select');
+        if (versionSelect) {
+            versionSelect.innerHTML = '<option value="">Seleccionar versión...</option>';
+        }
+        return;
+    }
+    
+    fetch(`/api/versiones/${marcaId}`)
+        .then(response => response.json())
+        .then(data => {
+            const versionSelect = document.getElementById('version_select');
+            if (versionSelect) {
+                versionSelect.innerHTML = '<option value="">Seleccionar versión...</option>';
+                data.forEach(version => {
+                    const option = document.createElement('option');
+                    option.value = version.id_version;
+                    option.textContent = version.nombre;
+                    versionSelect.appendChild(option);
+                });
+                console.log('✅ Versiones cargadas:', data.length);
+            }
+        })
+        .catch(error => {
+            console.error('❌ Error cargando versiones:', error);
+        });
+}
+
+// Funciones para agregar productos
+function agregarProductoAlLote() {
+    console.log('=== AGREGAR PRODUCTO AL LOTE ===');
+    
+    // Obtener el tipo de producto seleccionado
+    const tipoProducto = document.querySelector('input[name="tipo_producto"]:checked').value;
+    console.log('Tipo de producto:', tipoProducto);
+    
+    let producto = {
+        tipo: tipoProducto,
+        cantidad: document.getElementById('cantidad_producto').value,
+        precio_compra: document.getElementById('precio_compra_producto').value,
+        precio_venta: document.getElementById('precio_venta_producto').value,
+        es_pesable: document.getElementById('es_pesable').checked
+    };
+    
+    if (tipoProducto === 'existente') {
+        // Producto existente
+        const productoExistenteSelect = document.getElementById('producto_existente_select');
+        if (!productoExistenteSelect.value) {
+            alert('Por favor selecciona un producto existente');
+            return;
+        }
+        
+        const option = productoExistenteSelect.options[productoExistenteSelect.selectedIndex];
+        producto.producto_existente = productoExistenteSelect.value;
+        producto.nombre = option.textContent;
+        producto.codigo = option.textContent.split(' - ')[0];
+        
+    } else {
+        // Producto nuevo
+        const categoriaSelect = document.getElementById('categoria_select');
+        const subcategoriaSelect = document.getElementById('subcategoria_select');
+        const marcaSelect = document.getElementById('marca_select');
+        const versionSelect = document.getElementById('version_select');
+        
+        if (!categoriaSelect.value || !subcategoriaSelect.value || !marcaSelect.value || !versionSelect.value) {
+            alert('Por favor completa todos los campos del producto nuevo (categoría, subcategoría, marca, versión)');
+            return;
+        }
+        
+        producto.categoria_id = categoriaSelect.value;
+        producto.subcategoria_id = subcategoriaSelect.value;
+        producto.marca_id = marcaSelect.value;
+        producto.version_id = versionSelect.value;
+        
+        // Obtener nombres para mostrar
+        producto.categoria_nombre = categoriaSelect.options[categoriaSelect.selectedIndex].textContent;
+        producto.subcategoria_nombre = subcategoriaSelect.options[subcategoriaSelect.selectedIndex].textContent;
+        producto.marca_nombre = marcaSelect.options[marcaSelect.selectedIndex].textContent;
+        producto.version_nombre = versionSelect.options[versionSelect.selectedIndex].textContent;
+        
+        // Generar nombre del producto
+        producto.nombre = `${producto.marca_nombre} ${producto.version_nombre}`;
+        producto.codigo = `NUEVO-${Date.now()}`;
+    }
+    
+    // Validar campos requeridos
+    if (!producto.cantidad || !producto.precio_compra || !producto.precio_venta) {
+        alert('Por favor completa todos los campos requeridos (cantidad, precio de compra, precio de venta)');
+        return;
+    }
+    
+    // Agregar producto a la lista
+    productos.push(producto);
+    contadorFilas++;
+    
+    // Agregar fila a la tabla
+    agregarFilaProducto(producto);
+    
+    // Actualizar contador
+    actualizarContadorProductos();
+    
+    // Limpiar solo los campos del producto (mantener selecciones)
+    limpiarCamposProducto();
+    
+    console.log('✅ Producto agregado al lote:', producto);
+    console.log('Total de productos:', productos.length);
+}
+
+function agregarFilaProducto(producto) {
+    const tbody = document.getElementById('tbodyProductos');
+    const nuevaFila = `
+        <tr id="fila_${contadorFilas}">
+            <td>${contadorFilas}</td>
+            <td>${producto.tipo === 'existente' ? producto.nombre : 'Nuevo producto'}</td>
+            <td>${producto.tipo === 'existente' ? '-' : producto.categoria_nombre}</td>
+            <td>${producto.tipo === 'existente' ? '-' : producto.subcategoria_nombre}</td>
+            <td>${producto.tipo === 'existente' ? '-' : producto.marca_nombre}</td>
+            <td>${producto.tipo === 'existente' ? '-' : producto.version_nombre}</td>
+            <td>
+                <span class="badge ${producto.es_pesable ? 'bg-warning' : 'bg-secondary'}">
+                    ${producto.es_pesable ? 'Sí' : 'No'}
+                </span>
+            </td>
+            <td>${producto.cantidad} ${producto.es_pesable ? 'kg' : 'unidades'}</td>
+            <td>$${parseFloat(producto.precio_compra).toLocaleString()}</td>
+            <td>$${parseFloat(producto.precio_venta).toLocaleString()}</td>
+            <td>
+                <button type="button" class="btn btn-danger btn-sm" onclick="eliminarProducto(${contadorFilas - 1})">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </td>
+        </tr>
+    `;
+    
+    tbody.insertAdjacentHTML('beforeend', nuevaFila);
+}
+
+function actualizarContadorProductos() {
+    const contador = document.getElementById('contadorProductos');
+    if (contador) {
+        contador.textContent = `${productos.length} productos agregados`;
+    }
+}
+
+function limpiarCamposProducto() {
+    // Limpiar solo los campos del producto, mantener selecciones
+    document.getElementById('cantidad_producto').value = '1';
+    document.getElementById('precio_compra_producto').value = '';
+    document.getElementById('precio_venta_producto').value = '';
+    document.getElementById('es_pesable').checked = false;
+    
+    // Actualizar unidad de cantidad
+    const unidadText = document.getElementById('unidad_text');
+    if (unidadText) {
+        unidadText.textContent = 'unidades';
+    }
+}
+
+function eliminarProducto(index) {
+    if (confirm('¿Estás seguro de que quieres eliminar este producto del lote?')) {
+        productos.splice(index, 1);
+        actualizarTablaProductos();
+        actualizarContadorProductos();
+        console.log('✅ Producto eliminado del lote');
+    }
+}
+
+function actualizarTablaProductos() {
+    const tbody = document.getElementById('tbodyProductos');
+    tbody.innerHTML = '';
+    
+    productos.forEach((producto, index) => {
+        contadorFilas = index + 1;
+        agregarFilaProducto(producto);
+    });
+}
+
+function cerrarModalAgregarProducto() {
+    console.log('=== CERRANDO MODAL ===');
+    
+    // Limpiar todos los campos del modal
+    document.getElementById('formAgregarProducto').reset();
+    
+    // Limpiar selecciones
+    const subcategoriaSelect = document.getElementById('subcategoria_select');
+    const marcaSelect = document.getElementById('marca_select');
+    const versionSelect = document.getElementById('version_select');
+    
+    if (subcategoriaSelect) subcategoriaSelect.innerHTML = '<option value="">Seleccionar subcategoría...</option>';
+    if (marcaSelect) marcaSelect.innerHTML = '<option value="">Seleccionar marca...</option>';
+    if (versionSelect) versionSelect.innerHTML = '<option value="">Seleccionar versión...</option>';
+    
+    // Mostrar producto existente por defecto
+    const productoExistenteRadio = document.getElementById('producto_existente');
+    if (productoExistenteRadio) {
+        productoExistenteRadio.checked = true;
+        mostrarProductoExistente();
+    }
+    
+    // Cerrar modal
+    const modal = bootstrap.Modal.getInstance(document.getElementById('modalAgregarProducto'));
+    if (modal) {
+        modal.hide();
+    }
+    
+    console.log('✅ Modal cerrado y campos limpiados');
+}
+
+// Funciones para modales de categorías, marcas, etc.
+function abrirModalCategoria() {
+    console.log('Abriendo modal categoría...');
+    // Implementar
+}
+
+function abrirModalSubcategoria() {
+    console.log('Abriendo modal subcategoría...');
+    // Implementar
+}
+
+function abrirModalMarca() {
+    console.log('Abriendo modal marca...');
+    // Implementar
+}
+
+function abrirModalVersion() {
+    console.log('Abriendo modal versión...');
+    // Implementar
+}
+
+function abrirModalAdministracionCategorias() {
+    console.log('Abriendo administración de categorías...');
+    // Implementar
+}
+
+function crearLote() {
+    console.log('=== CREAR LOTE ===');
+    
+    // Validar que hay productos en el lote
+    if (productos.length === 0) {
+        alert('Debes agregar al menos un producto al lote');
+        return;
+    }
+    
+    // Obtener datos del formulario
+    const formData = new FormData(document.getElementById('formNuevoLote'));
+    const loteData = {
+        numero_lote: formData.get('numero_lote'),
+        nro_factura: formData.get('nro_factura'),
+        id_proveedor: formData.get('id_proveedor'),
+        fecha_factura: formData.get('fecha_factura'),
+        observaciones: formData.get('observaciones'),
+        productos: productos
+    };
+    
+    console.log('Datos del lote:', loteData);
+    
+    // Enviar datos al servidor
+    fetch('/crear_lote', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(loteData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('✅ Lote creado correctamente');
+            window.location.href = '/lotes';
+        } else {
+            alert('❌ Error al crear el lote: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('❌ Error al crear el lote');
+    });
+}
+</script>
+
+{% endblock %}

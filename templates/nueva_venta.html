@@ -1,0 +1,410 @@
+{% extends "base.html" %}
+{% block title %}Nueva Venta{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <h2>💰 Nueva Venta</h2>
+            
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <form method="post" class="mb-5" id="formVenta">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label for="fecha_venta" class="form-label">Fecha de Venta *</label>
+                            <input type="date" id="fecha_venta" name="fecha_venta" class="form-control" value="{{ today }}" required>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label for="metodo_pago" class="form-label">Método de Pago *</label>
+                            <select id="metodo_pago" name="metodo_pago" class="form-select" required onchange="toggleClienteRequired()">
+                                <option value="Efectivo">Efectivo</option>
+                                <option value="Tarjeta">Tarjeta</option>
+                                <option value="Transferencia">Transferencia</option>
+                                <option value="Cheque">Cheque</option>
+                                <option value="Préstamo Personal">Préstamo Personal</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label for="id_cliente" class="form-label">Cliente</label>
+                            <div class="input-group">
+                                <select id="id_cliente" name="id_cliente" class="form-select">
+                                    <option value="">Cliente General</option>
+                                    {% for cliente in clientes %}
+                                    <option value="{{ cliente.id_cliente }}" 
+                                            {% if request.args.get('cliente')|int == cliente.id_cliente %}selected{% endif %}>
+                                        {{ cliente.nombre }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                                <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#modalCliente">
+                                    ➕
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="observaciones" class="form-label">Observaciones</label>
+                    <textarea id="observaciones" name="observaciones" class="form-control" rows="2"></textarea>
+                </div>
+
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Productos de la Venta</h5>
+                        <button type="button" class="btn btn-success btn-sm" onclick="agregarFila()">
+                            ➕ Agregar Producto
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-bordered" id="tabla_productos">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th width="35%">Producto *</th>
+                                        <th width="15%">Stock</th>
+                                        <th width="15%">Cantidad *</th>
+                                        <th width="15%">Precio *</th>
+                                        <th width="10%">Subtotal</th>
+                                        <th width="10%">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>
+                                            <div class="input-group">
+                                                <select name="producto_id[]" class="form-select producto-select" required>
+                                                    <option value="">Seleccione producto</option>
+                                                    {% for producto in productos %}
+                                                    <option value="{{ producto.id_producto }}" 
+                                                            data-precio="{{ producto.precio_venta }}"
+                                                            data-stock="{{ producto.stock }}"
+                                                            data-pesable="{{ producto.es_pesable }}"
+                                                            data-unidad="{{ producto.unidad_medida }}">
+                                                        {{ producto.codigo }} - {{ producto.nombre }}
+                                                        {% if producto.es_pesable %}({{ producto.unidad_medida }}){% endif %}
+                                                    </option>
+                                                    {% endfor %}
+                                                </select>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span class="stock-display text-muted">-</span>
+                                        </td>
+                                        <td>
+                                            <input type="number" name="cantidad[]" min="1" class="form-control cantidad-input" required>
+                                        </td>
+                                        <td>
+                                            <input type="number" name="precio[]" step="0.01" min="0" class="form-control precio-input" required>
+                                        </td>
+                                        <td>
+                                            <span class="subtotal-display text-end">$0.00</span>
+                                        </td>
+                                        <td>
+                                            <div class="btn-group" role="group">
+                                                <button type="button" class="btn btn-danger btn-sm" onclick="eliminarFila(this)" title="Eliminar fila">
+                                                    🗑️
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row mt-4">
+                    <div class="col-md-6">
+                        <div class="card bg-light">
+                            <div class="card-body">
+                                <h6 class="card-title">Resumen de la Venta</h6>
+                                <div class="d-flex justify-content-between">
+                                    <span>Total de Productos:</span>
+                                    <span id="total-productos">0</span>
+                                </div>
+                                <div class="d-flex justify-content-between">
+                                    <span>Total de la Venta:</span>
+                                    <span id="total-venta" class="fw-bold">$0.00</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="d-flex justify-content-end">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                💰 Registrar Venta
+                            </button>
+                            <a href="{{ url_for('ventas') }}" class="btn btn-secondary btn-lg ms-2">
+                                ❌ Cancelar
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para agregar cliente -->
+<div class="modal fade" id="modalCliente" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Agregar Nuevo Cliente</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="formCliente">
+                    <div class="mb-3">
+                        <label for="nombre_cliente" class="form-label">Nombre del Cliente *</label>
+                        <input type="text" id="nombre_cliente" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="telefono_cliente" class="form-label">Teléfono</label>
+                        <input type="text" id="telefono_cliente" class="form-control">
+                    </div>
+                    <div class="mb-3">
+                        <label for="email_cliente" class="form-label">Email</label>
+                        <input type="email" id="email_cliente" class="form-control">
+                    </div>
+                    <div class="mb-3">
+                        <label for="direccion_cliente" class="form-label">Dirección</label>
+                        <textarea id="direccion_cliente" class="form-control" rows="2"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="guardarCliente()">Guardar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Variables globales
+let productosData = {{ productos | tojson }};
+
+function agregarFila() {
+    const tabla = document.getElementById('tabla_productos').getElementsByTagName('tbody')[0];
+    const nuevaFila = tabla.rows[0].cloneNode(true);
+    
+    // Limpiar valores
+    nuevaFila.querySelectorAll('input').forEach(input => input.value = '');
+    nuevaFila.querySelector('select').selectedIndex = 0;
+    nuevaFila.querySelector('.stock-display').textContent = '-';
+    nuevaFila.querySelector('.subtotal-display').textContent = '$0.00';
+    
+    tabla.appendChild(nuevaFila);
+    inicializarEventosFila(nuevaFila);
+}
+
+function eliminarFila(boton) {
+    const tabla = document.getElementById('tabla_productos').getElementsByTagName('tbody')[0];
+    if (tabla.rows.length > 1) {
+        boton.closest('tr').remove();
+        calcularTotales();
+    } else {
+        alert('Debe ingresar al menos un producto.');
+    }
+}
+
+function inicializarEventosFila(fila) {
+    const select = fila.querySelector('.producto-select');
+    const precioInput = fila.querySelector('.precio-input');
+    const cantidadInput = fila.querySelector('.cantidad-input');
+    const stockDisplay = fila.querySelector('.stock-display');
+    const subtotalDisplay = fila.querySelector('.subtotal-display');
+    
+    select.addEventListener('change', function() {
+        const selectedOption = this.options[this.selectedIndex];
+        if (selectedOption.value) {
+            const producto = productosData.find(p => p.id_producto == selectedOption.value);
+            if (producto) {
+                precioInput.value = producto.precio_venta;
+                stockDisplay.textContent = producto.stock + (producto.es_pesable ? ' kg' : ' unidades');
+                
+                // Configurar input de cantidad según si es pesable
+                if (producto.es_pesable) {
+                    cantidadInput.min = '0.001';
+                    cantidadInput.step = '0.001';
+                    cantidadInput.placeholder = '0.000 kg';
+                    cantidadInput.max = producto.stock;
+                } else {
+                    cantidadInput.min = '1';
+                    cantidadInput.step = '1';
+                    cantidadInput.placeholder = 'Cantidad';
+                    cantidadInput.max = producto.stock;
+                }
+                
+                calcularSubtotal(fila);
+            }
+        } else {
+            precioInput.value = '';
+            stockDisplay.textContent = '-';
+            subtotalDisplay.textContent = '$0.00';
+            cantidadInput.min = '1';
+            cantidadInput.step = '1';
+            cantidadInput.placeholder = 'Cantidad';
+        }
+    });
+    
+    cantidadInput.addEventListener('input', function() {
+        calcularSubtotal(fila);
+    });
+    
+    precioInput.addEventListener('input', function() {
+        calcularSubtotal(fila);
+    });
+}
+
+function calcularSubtotal(fila) {
+    const cantidad = parseFloat(fila.querySelector('.cantidad-input').value) || 0;
+    const precio = parseFloat(fila.querySelector('.precio-input').value) || 0;
+    const subtotal = cantidad * precio;
+    fila.querySelector('.subtotal-display').textContent = `$${subtotal.toFixed(2)}`;
+    calcularTotales();
+}
+
+function calcularTotales() {
+    let totalProductos = 0;
+    let totalVenta = 0;
+    
+    document.querySelectorAll('#tabla_productos tbody tr').forEach(fila => {
+        const cantidad = parseFloat(fila.querySelector('.cantidad-input').value) || 0;
+        const precio = parseFloat(fila.querySelector('.precio-input').value) || 0;
+        const subtotal = cantidad * precio;
+        
+        if (cantidad > 0) {
+            totalProductos += cantidad;
+            totalVenta += subtotal;
+        }
+    });
+    
+    document.getElementById('total-productos').textContent = totalProductos;
+    document.getElementById('total-venta').textContent = `$${totalVenta.toFixed(2)}`;
+}
+
+// Inicializar eventos para todas las filas existentes
+document.addEventListener('DOMContentLoaded', function() {
+    const filas = document.querySelectorAll('#tabla_productos tbody tr');
+    filas.forEach(fila => inicializarEventosFila(fila));
+});
+
+// Función para guardar cliente
+async function guardarCliente() {
+    const nombre = document.getElementById('nombre_cliente').value;
+    const telefono = document.getElementById('telefono_cliente').value;
+    const email = document.getElementById('email_cliente').value;
+    const direccion = document.getElementById('direccion_cliente').value;
+    
+    if (!nombre) {
+        alert('El nombre del cliente es obligatorio');
+        return;
+    }
+    
+    try {
+        const response = await fetch('/api/clientes', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                nombre: nombre,
+                telefono: telefono,
+                email: email,
+                direccion: direccion
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            // Agregar el nuevo cliente al select
+            const select = document.getElementById('id_cliente');
+            const option = document.createElement('option');
+            option.value = data.cliente.id_cliente;
+            option.textContent = data.cliente.nombre;
+            select.appendChild(option);
+            select.value = data.cliente.id_cliente;
+            
+            // Cerrar modal y limpiar formulario
+            bootstrap.Modal.getInstance(document.getElementById('modalCliente')).hide();
+            document.getElementById('formCliente').reset();
+            
+            alert('Cliente agregado correctamente');
+        } else {
+            alert('Error: ' + data.message);
+        }
+    } catch (error) {
+        alert('Error al guardar el cliente');
+        console.error(error);
+    }
+}
+
+// Función para hacer obligatorio el cliente cuando es préstamo personal
+function toggleClienteRequired() {
+    const metodoPago = document.getElementById('metodo_pago').value;
+    const clienteSelect = document.getElementById('id_cliente');
+    
+    if (metodoPago === 'Préstamo Personal') {
+        clienteSelect.required = true;
+        clienteSelect.classList.add('is-invalid');
+        if (!clienteSelect.value) {
+            alert('Para préstamos personales es obligatorio seleccionar un cliente');
+        }
+    } else {
+        clienteSelect.required = false;
+        clienteSelect.classList.remove('is-invalid');
+    }
+}
+
+// Validación del formulario
+document.getElementById('formVenta').addEventListener('submit', function(e) {
+    const productos = document.querySelectorAll('select[name="producto_id[]"]');
+    const productosSeleccionados = new Set();
+    let hayDuplicados = false;
+    
+    productos.forEach(select => {
+        if (select.value) {
+            if (productosSeleccionados.has(select.value)) {
+                hayDuplicados = true;
+            } else {
+                productosSeleccionados.add(select.value);
+            }
+        }
+    });
+    
+    if (hayDuplicados) {
+        e.preventDefault();
+        alert('No puede agregar el mismo producto más de una vez en la misma venta.');
+    }
+    
+    // Validar cliente para préstamos personales
+    const metodoPago = document.getElementById('metodo_pago').value;
+    const clienteSelect = document.getElementById('id_cliente');
+    
+    if (metodoPago === 'Préstamo Personal' && !clienteSelect.value) {
+        e.preventDefault();
+        alert('Para préstamos personales es obligatorio seleccionar un cliente');
+        clienteSelect.focus();
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,201 @@
+{% extends "base.html" %}
+
+{% block title %}Clientes POS - Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3">Clientes POS</h1>
+                <a href="{{ url_for('nuevo_cliente_pos') }}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Nuevo Cliente POS
+                </a>
+            </div>
+        </div>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Clientes POS Registrados</h6>
+                </div>
+                <div class="card-body">
+                    {% if clientes %}
+                        <div class="table-responsive">
+                            <table class="table table-bordered" width="100%" cellspacing="0">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Nombre</th>
+                                        <th>URL</th>
+                                        <th>Descripción</th>
+                                        <th>Estado</th>
+                                        <th>Última Sincronización</th>
+                                        <th>Último Error</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for cliente in clientes %}
+                                    <tr>
+                                        <td>{{ cliente.id_cliente }}</td>
+                                        <td>{{ cliente.nombre }}</td>
+                                        <td>
+                                            <code>{{ cliente.url }}</code>
+                                        </td>
+                                        <td>{{ cliente.descripcion or '-' }}</td>
+                                        <td>
+                                            {% if cliente.estado == 'conectado' %}
+                                                <span class="badge badge-success">Conectado</span>
+                                            {% elif cliente.estado == 'desconectado' %}
+                                                <span class="badge badge-danger">Desconectado</span>
+                                            {% elif cliente.estado == 'error' %}
+                                                <span class="badge badge-warning">Error</span>
+                                            {% else %}
+                                                <span class="badge badge-secondary">Desconocido</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if cliente.ultima_sincronizacion %}
+                                                {{ cliente.ultima_sincronizacion }}
+                                            {% else %}
+                                                <span class="text-muted">Nunca</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if cliente.ultimo_error %}
+                                                <small class="text-danger">{{ cliente.ultimo_error }}</small>
+                                            {% else %}
+                                                <span class="text-muted">-</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <div class="btn-group" role="group">
+                                                <button type="button" class="btn btn-sm btn-outline-primary" 
+                                                        onclick="testConnection({{ cliente.id_cliente }}, '{{ cliente.url }}')">
+                                                    <i class="fas fa-wifi"></i> Probar
+                                                </button>
+                                                <button type="button" class="btn btn-sm btn-outline-success" 
+                                                        onclick="syncClient({{ cliente.id_cliente }})">
+                                                    <i class="fas fa-sync-alt"></i> Sincronizar
+                                                </button>
+                                                <button type="button" class="btn btn-sm btn-outline-danger" 
+                                                        onclick="deleteClient({{ cliente.id_cliente }}, '{{ cliente.nombre }}')">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-desktop fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">No hay clientes POS registrados</h5>
+                            <p class="text-muted">Registra tu primer cliente POS para comenzar la sincronización</p>
+                            <a href="{{ url_for('nuevo_cliente_pos') }}" class="btn btn-primary">
+                                <i class="fas fa-plus"></i> Registrar Cliente POS
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function testConnection(clienteId, url) {
+    if (confirm('¿Probar conexión con ' + url + '?')) {
+        fetch('/api/test_connection', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                cliente_id: clienteId,
+                url: url
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Conexión exitosa: ' + data.message);
+            } else {
+                alert('Error de conexión: ' + data.error);
+            }
+        })
+        .catch(error => {
+            alert('Error al probar conexión: ' + error);
+        });
+    }
+}
+
+function syncClient(clienteId) {
+    if (confirm('¿Sincronizar con este cliente?')) {
+        fetch('/api/sync_client', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                cliente_id: clienteId
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Sincronización exitosa: ' + data.message);
+                location.reload();
+            } else {
+                alert('Error en sincronización: ' + data.error);
+            }
+        })
+        .catch(error => {
+            alert('Error al sincronizar: ' + error);
+        });
+    }
+}
+
+function deleteClient(clienteId, nombre) {
+    if (confirm('¿Eliminar cliente POS "' + nombre + '"? Esta acción no se puede deshacer.')) {
+        fetch('/api/delete_client_pos', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                cliente_id: clienteId
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Cliente eliminado exitosamente');
+                location.reload();
+            } else {
+                alert('Error al eliminar: ' + data.error);
+            }
+        })
+        .catch(error => {
+            alert('Error al eliminar cliente: ' + error);
+        });
+    }
+}
+</script>
+{% endblock %}

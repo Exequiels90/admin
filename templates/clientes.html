@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+{% block title %}Gestión de Clientes{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>👥 Gestión de Clientes</h2>
+                <a href="{{ url_for('nuevo_cliente') }}" class="btn btn-primary">
+                    ➕ Nuevo Cliente
+                </a>
+            </div>
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            {% if clientes %}
+            <div class="card">
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Nombre</th>
+                                    <th>Teléfono</th>
+                                    <th>Email</th>
+                                    <th>Dirección</th>
+                                    <th class="text-center">Total Ventas</th>
+                                    <th class="text-end">Total Comprado</th>
+                                    <th class="text-center">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for cliente in clientes %}
+                                <tr>
+                                    <td><strong>#{{ cliente.id_cliente }}</strong></td>
+                                    <td>{{ cliente.nombre }}</td>
+                                    <td>
+                                        {% if cliente.telefono %}
+                                            {{ cliente.telefono }}
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if cliente.email %}
+                                            {{ cliente.email }}
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if cliente.direccion %}
+                                            <small>{{ cliente.direccion[:50] }}{% if cliente.direccion|length > 50 %}...{% endif %}</small>
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="badge bg-primary">{{ cliente.total_ventas }}</span>
+                                    </td>
+                                    <td class="text-end">
+                                        {% if cliente.total_comprado > 0 %}
+                                            <strong>${{ "%.2f"|format(cliente.total_comprado) }}</strong>
+                                        {% else %}
+                                            <span class="text-muted">$0.00</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-center">
+                                        <div class="btn-group" role="group">
+                                            <a href="#" class="btn btn-sm btn-info" title="Ver historial">
+                                                👁️
+                                            </a>
+                                            <a href="#" class="btn btn-sm btn-warning" title="Editar cliente">
+                                                ✏️
+                                            </a>
+                                            <button type="button" 
+                                                    class="btn btn-sm btn-success" 
+                                                    title="Nueva venta"
+                                                    onclick="nuevaVentaCliente({{ cliente.id_cliente }})">
+                                                💰
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div class="card">
+                <div class="card-body text-center py-5">
+                    <h4 class="text-muted">No hay clientes registrados</h4>
+                    <p class="text-muted">Comience creando su primer cliente</p>
+                    <a href="{{ url_for('nuevo_cliente') }}" class="btn btn-primary btn-lg">
+                        ➕ Crear Primer Cliente
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+function nuevaVentaCliente(idCliente) {
+    // Redirigir a nueva venta con el cliente preseleccionado
+    window.location.href = `/nueva_venta?cliente=${idCliente}`;
+}
+</script>
+{% endblock %}

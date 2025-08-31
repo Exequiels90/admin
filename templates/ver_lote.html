@@ -1,0 +1,173 @@
+{% extends "base.html" %}
+{% block title %}Detalles del Lote{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>Detalles del Lote #{{ lote.id_lote }}</h2>
+                <div>
+                    <a href="{{ url_for('listar_lotes') }}" class="btn btn-secondary">
+                        ← Volver a Lotes
+                    </a>
+                    <a href="{{ url_for('editar_lote', id_lote=lote.id_lote) }}" class="btn btn-warning ms-2">
+                        ✏️ Editar
+                    </a>
+                    <button class="btn btn-primary ms-2" onclick="window.print()">
+                        🖨️ Imprimir
+                    </button>
+                </div>
+            </div>
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <!-- Información del Lote -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">📋 Información de la Factura</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td><strong>Número de Factura:</strong></td>
+                                    <td>{{ lote.nro_factura or 'Sin número' }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Fecha:</strong></td>
+                                    <td>{{ lote.fecha }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Fecha de Carga:</strong></td>
+                                    <td>{{ lote.fecha_carga }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td><strong>Proveedor:</strong></td>
+                                    <td>{{ lote.proveedor_nombre or 'Sin proveedor' }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Total de Items:</strong></td>
+                                    <td>{{ detalles | length }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Observaciones:</strong></td>
+                                    <td>{{ lote.observaciones or 'Sin observaciones' }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Productos del Lote -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">📦 Productos del Lote</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>#</th>
+                                    <th>Código</th>
+                                    <th>Producto</th>
+                                    <th class="text-center">Cantidad</th>
+                                    <th class="text-end">Precio Compra</th>
+                                    <th class="text-end">Precio Venta</th>
+                                    <th class="text-end">Subtotal Compra</th>
+                                    <th class="text-end">Subtotal Venta</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for detalle in detalles %}
+                                <tr>
+                                    <td>{{ loop.index }}</td>
+                                    <td><code>{{ detalle.codigo }}</code></td>
+                                    <td>{{ detalle.producto_nombre }}</td>
+                                    <td class="text-center">{{ detalle.cantidad }}</td>
+                                    <td class="text-end">${{ "%.2f"|format(detalle.precio_compra) }}</td>
+                                    <td class="text-end">${{ "%.2f"|format(detalle.precio_venta) }}</td>
+                                    <td class="text-end">${{ "%.2f"|format(detalle.cantidad * detalle.precio_compra) }}</td>
+                                    <td class="text-end">${{ "%.2f"|format(detalle.cantidad * detalle.precio_venta) }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                            <tfoot class="table-info">
+                                <tr>
+                                    <td colspan="6" class="text-end"><strong>TOTALES:</strong></td>
+                                    <td class="text-end"><strong>${{ "%.2f"|format(detalles | sum(attribute='cantidad') * detalles | sum(attribute='precio_compra')) }}</strong></td>
+                                    <td class="text-end"><strong>${{ "%.2f"|format(detalles | sum(attribute='cantidad') * detalles | sum(attribute='precio_venta')) }}</strong></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Resumen -->
+            <div class="row mt-4">
+                <div class="col-md-4">
+                    <div class="card bg-primary text-white">
+                        <div class="card-body text-center">
+                            <h6 class="card-title">Total Items</h6>
+                            <h3 class="mb-0">{{ detalles | length }}</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card bg-success text-white">
+                        <div class="card-body text-center">
+                            <h6 class="card-title">Total Compra</h6>
+                            <h3 class="mb-0">${{ "%.2f"|format(detalles | sum(attribute='cantidad') * detalles | sum(attribute='precio_compra')) }}</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card bg-info text-white">
+                        <div class="card-body text-center">
+                            <h6 class="card-title">Total Venta</h6>
+                            <h3 class="mb-0">${{ "%.2f"|format(detalles | sum(attribute='cantidad') * detalles | sum(attribute='precio_venta')) }}</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+@media print {
+    .btn, .sidebar, .content {
+        display: none !important;
+    }
+    .container-fluid {
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    .card {
+        border: 1px solid #000 !important;
+        page-break-inside: avoid;
+    }
+    .table {
+        font-size: 12px !important;
+    }
+}
+</style>
+{% endblock %}

@@ -1,0 +1,275 @@
+{% extends "base.html" %}
+
+{% block title %}Editar Producto - Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3">Editar Producto</h1>
+                <a href="{{ url_for('admin') }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Volver
+                </a>
+            </div>
+        </div>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Información del Producto</h6>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        <!-- Información básica -->
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="codigo" class="form-label">Código del Producto *</label>
+                                    <input type="text" class="form-control" id="codigo" name="codigo" value="{{ producto.codigo }}" required>
+                                    <div class="form-text">Código único para identificar el producto</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="nombre" class="form-label">Nombre del Producto *</label>
+                                    <input type="text" class="form-control" id="nombre" name="nombre" value="{{ producto.nombre }}" required>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Categorización -->
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div class="mb-3">
+                                    <label for="categoria_id" class="form-label">Categoría *</label>
+                                    <select class="form-select" id="categoria_id" name="categoria_id" required>
+                                        <option value="">Seleccionar categoría</option>
+                                        {% for categoria in categorias %}
+                                        <option value="{{ categoria.id_categoria }}" {% if producto.categoria_id == categoria.id_categoria %}selected{% endif %}>
+                                            {{ categoria.nombre }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="mb-3">
+                                    <label for="subcategoria_id" class="form-label">Subcategoría</label>
+                                    <select class="form-select" id="subcategoria_id" name="subcategoria_id">
+                                        <option value="">Seleccionar subcategoría</option>
+                                        {% for subcategoria in subcategorias %}
+                                        <option value="{{ subcategoria.id_subcategoria }}" {% if producto.subcategoria_id == subcategoria.id_subcategoria %}selected{% endif %}>
+                                            {{ subcategoria.nombre }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="mb-3">
+                                    <label for="marca_id" class="form-label">Marca</label>
+                                    <select class="form-select" id="marca_id" name="marca_id">
+                                        <option value="">Seleccionar marca</option>
+                                        {% for marca in marcas %}
+                                        <option value="{{ marca.id_marca }}" {% if producto.marca_id == marca.id_marca %}selected{% endif %}>
+                                            {{ marca.nombre }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="mb-3">
+                                    <label for="version_id" class="form-label">Versión</label>
+                                    <select class="form-select" id="version_id" name="version_id">
+                                        <option value="">Seleccionar versión</option>
+                                        {% for version in versiones %}
+                                        <option value="{{ version.id_version }}" {% if producto.version_id == version.id_version %}selected{% endif %}>
+                                            {{ version.nombre }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Precios y Stock -->
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div class="mb-3">
+                                    <label for="precio_compra" class="form-label">Precio de Compra</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">$</span>
+                                        <input type="number" class="form-control" id="precio_compra" name="precio_compra" 
+                                               value="{{ producto.precio_compra or 0 }}" min="0" step="0.01">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="mb-3">
+                                    <label for="precio_venta" class="form-label">Precio de Venta</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">$</span>
+                                        <input type="number" class="form-control" id="precio_venta" name="precio_venta" 
+                                               value="{{ producto.precio_venta or 0 }}" min="0" step="0.01">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="mb-3">
+                                    <label for="stock" class="form-label">Stock</label>
+                                    <input type="number" class="form-control" id="stock" name="stock" 
+                                           value="{{ producto.stock or 0 }}" min="0" step="0.001">
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="mb-3">
+                                    <label for="unidad_medida" class="form-label">Unidad de Medida</label>
+                                    <select class="form-select" id="unidad_medida" name="unidad_medida">
+                                        <option value="unidad" {% if producto.unidad_medida == 'unidad' %}selected{% endif %}>Unidad</option>
+                                        <option value="kg" {% if producto.unidad_medida == 'kg' %}selected{% endif %}>Kilogramo</option>
+                                        <option value="litro" {% if producto.unidad_medida == 'litro' %}selected{% endif %}>Litro</option>
+                                        <option value="metro" {% if producto.unidad_medida == 'metro' %}selected{% endif %}>Metro</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Configuraciones adicionales -->
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="es_pesable" name="es_pesable" 
+                                               {% if producto.es_pesable %}checked{% endif %}>
+                                        <label class="form-check-label" for="es_pesable">
+                                            Producto Pesable
+                                        </label>
+                                        <div class="form-text">Marcar si el producto se vende por peso</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="activo" name="activo" 
+                                               {% if producto.activo %}checked{% endif %}>
+                                        <label class="form-check-label" for="activo">
+                                            Producto Activo
+                                        </label>
+                                        <div class="form-text">Marcar si el producto está disponible para venta</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Botones de acción -->
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="d-flex justify-content-end gap-2">
+                                    <a href="{{ url_for('admin') }}" class="btn btn-secondary">
+                                        <i class="fas fa-times"></i> Cancelar
+                                    </a>
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-save"></i> Guardar Cambios
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Cargar subcategorías cuando se selecciona categoría
+document.getElementById('categoria_id').addEventListener('change', function() {
+    const categoriaId = this.value;
+    const subcategoriaSelect = document.getElementById('subcategoria_id');
+    const marcaSelect = document.getElementById('marca_id');
+    const versionSelect = document.getElementById('version_id');
+    
+    // Limpiar opciones dependientes
+    subcategoriaSelect.innerHTML = '<option value="">Seleccionar subcategoría</option>';
+    marcaSelect.innerHTML = '<option value="">Seleccionar marca</option>';
+    versionSelect.innerHTML = '<option value="">Seleccionar versión</option>';
+    
+    if (categoriaId) {
+        fetch(`/api/subcategorias/${categoriaId}`)
+            .then(response => response.json())
+            .then(data => {
+                data.forEach(subcategoria => {
+                    const option = document.createElement('option');
+                    option.value = subcategoria.id_subcategoria;
+                    option.textContent = subcategoria.nombre;
+                    subcategoriaSelect.appendChild(option);
+                });
+            });
+    }
+});
+
+// Cargar marcas cuando se selecciona subcategoría
+document.getElementById('subcategoria_id').addEventListener('change', function() {
+    const subcategoriaId = this.value;
+    const marcaSelect = document.getElementById('marca_id');
+    const versionSelect = document.getElementById('version_id');
+    
+    // Limpiar opciones dependientes
+    marcaSelect.innerHTML = '<option value="">Seleccionar marca</option>';
+    versionSelect.innerHTML = '<option value="">Seleccionar versión</option>';
+    
+    if (subcategoriaId) {
+        fetch(`/api/marcas/${subcategoriaId}`)
+            .then(response => response.json())
+            .then(data => {
+                data.forEach(marca => {
+                    const option = document.createElement('option');
+                    option.value = marca.id_marca;
+                    option.textContent = marca.nombre;
+                    marcaSelect.appendChild(option);
+                });
+            });
+    }
+});
+
+// Cargar versiones cuando se selecciona marca
+document.getElementById('marca_id').addEventListener('change', function() {
+    const marcaId = this.value;
+    const versionSelect = document.getElementById('version_id');
+    
+    // Limpiar opciones dependientes
+    versionSelect.innerHTML = '<option value="">Seleccionar versión</option>';
+    
+    if (marcaId) {
+        fetch(`/api/versiones/${marcaId}`)
+            .then(response => response.json())
+            .then(data => {
+                data.forEach(version => {
+                    const option = document.createElement('option');
+                    option.value = version.id_version;
+                    option.textContent = version.nombre;
+                    versionSelect.appendChild(option);
+                });
+            });
+    }
+});
+</script>
+
+{% endblock %}
+

@@ -1,0 +1,226 @@
+{% extends "base.html" %}
+
+{% block title %}Lista de productos{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <h1 class="mb-4">Lista de productos</h1>
+    
+    <!-- Filtros -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">Filtros</h5>
+        </div>
+        <div class="card-body">
+            <form method="GET" action="{{ url_for('admin') }}" class="row g-3">
+                <div class="col-md-3">
+                    <label for="filtro_categoria" class="form-label">Categoría</label>
+                    <select class="form-select" id="filtro_categoria" name="filtro_categoria">
+                        <option value="">Todas las categorías</option>
+                        {% for categoria in categorias %}
+                        <option value="{{ categoria.id_categoria }}" {% if filtros.categoria_id == categoria.id_categoria %}selected{% endif %}>
+                            {{ categoria.nombre }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="filtro_subcategoria" class="form-label">Subcategoría</label>
+                    <select class="form-select" id="filtro_subcategoria" name="filtro_subcategoria">
+                        <option value="">Todas las subcategorías</option>
+                        {% for subcategoria in subcategorias %}
+                        <option value="{{ subcategoria.id_subcategoria }}" {% if filtros.subcategoria_id == subcategoria.id_subcategoria %}selected{% endif %}>
+                            {{ subcategoria.nombre }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="filtro_marca" class="form-label">Marca</label>
+                    <select class="form-select" id="filtro_marca" name="filtro_marca">
+                        <option value="">Todas las marcas</option>
+                        {% for marca in marcas %}
+                        <option value="{{ marca.id_marca }}" {% if filtros.marca_id == marca.id_marca %}selected{% endif %}>
+                            {{ marca.nombre }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="filtro_version" class="form-label">Versión</label>
+                    <select class="form-select" id="filtro_version" name="filtro_version">
+                        <option value="">Todas las versiones</option>
+                        {% for version in versiones %}
+                        <option value="{{ version.id_version }}" {% if filtros.version_id == version.id_version %}selected{% endif %}>
+                            {{ version.nombre }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="filtro_pesable" class="form-label">Tipo de Producto</label>
+                    <select class="form-select" id="filtro_pesable" name="filtro_pesable">
+                        <option value="">Todos los productos</option>
+                        <option value="si" {% if filtros.pesable == 'si' %}selected{% endif %}>Productos Pesables</option>
+                        <option value="no" {% if filtros.pesable == 'no' %}selected{% endif %}>Productos por Unidad</option>
+                    </select>
+                </div>
+                <div class="col-12">
+                    <button type="submit" class="btn btn-primary">Filtrar</button>
+                    <a href="{{ url_for('admin') }}" class="btn btn-secondary">Limpiar filtros</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Tabla de productos -->
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Productos activos con stock > 0</h5>
+            <span class="badge bg-primary">{{ productos|length }} productos</span>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover bg-white">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>ID</th>
+                            <th>Código</th>
+                            <th>Nombre</th>
+                            <th>Categoría</th>
+                            <th>Subcategoría</th>
+                            <th>Marca</th>
+                            <th>Versión</th>
+                            <th>Precio Compra</th>
+                            <th>Precio Venta</th>
+                            <th>Stock</th>
+                            <th>Tipo</th>
+                            <th>Última Sincronización</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for producto in productos %}
+                        <tr>
+                            <td>{{ producto.id_producto }}</td>
+                            <td>{{ producto.codigo }}</td>
+                            <td>{{ producto.nombre }}</td>
+                            <td>{{ producto.categoria or "Sin categoría" }}</td>
+                            <td>{{ producto.subcategoria or "Sin subcategoría" }}</td>
+                            <td>{{ producto.marca_nombre or "Sin marca" }}</td>
+                            <td>{{ producto.version_nombre or "Sin versión" }}</td>
+                            <td>${{ "%.2f"|format(producto.precio_compra or 0) }}</td>
+                            <td>${{ "%.2f"|format(producto.precio_venta or 0) }}</td>
+                            <td>
+                                {% if producto.es_pesable %}
+                                    {{ "%.3f"|format(producto.stock or 0) }} kg
+                                {% else %}
+                                    {{ producto.stock or 0 }} unidades
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if producto.es_pesable %}
+                                    <span class="badge badge-info">{{ producto.unidad_medida }}</span>
+                                {% else %}
+                                    <span class="badge badge-secondary">Unidad</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if producto.ultima_sincronizacion %}
+                                    <small>{{ producto.ultima_sincronizacion }}</small>
+                                {% else %}
+                                    <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <a href="{{ url_for('editar_producto', id_producto=producto.id_producto) }}" class="btn btn-warning btn-sm">Editar</a>
+                                <a href="{{ url_for('eliminar_producto', id_producto=producto.id_producto) }}"
+                                   class="btn btn-danger btn-sm"
+                                   onclick="return confirm('¿Estás seguro de eliminar este producto?')">
+                                   Eliminar
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// JavaScript para filtros dependientes
+document.addEventListener('DOMContentLoaded', function() {
+    const categoriaSelect = document.getElementById('filtro_categoria');
+    const subcategoriaSelect = document.getElementById('filtro_subcategoria');
+    const marcaSelect = document.getElementById('filtro_marca');
+    const versionSelect = document.getElementById('filtro_version');
+
+    // Datos de las relaciones (se cargarán desde el servidor)
+    const subcategoriasData = {{ subcategorias_data | tojson | safe }};
+    const marcasData = {{ marcas_data | tojson | safe }};
+    const versionesData = {{ versiones_data | tojson | safe }};
+
+    function actualizarSubcategorias() {
+        const categoriaId = categoriaSelect.value;
+        subcategoriaSelect.innerHTML = '<option value="">Todas las subcategorías</option>';
+        
+        if (categoriaId) {
+            const subcategoriasFiltradas = subcategoriasData.filter(s => s.categoria_id == categoriaId);
+            subcategoriasFiltradas.forEach(sub => {
+                const option = document.createElement('option');
+                option.value = sub.id_subcategoria;
+                option.textContent = sub.nombre;
+                subcategoriaSelect.appendChild(option);
+            });
+        }
+    }
+
+    function actualizarMarcas() {
+        const subcategoriaId = subcategoriaSelect.value;
+        marcaSelect.innerHTML = '<option value="">Todas las marcas</option>';
+        
+        if (subcategoriaId) {
+            const marcasFiltradas = marcasData.filter(m => m.subcategoria_id == subcategoriaId);
+            marcasFiltradas.forEach(marca => {
+                const option = document.createElement('option');
+                option.value = marca.id_marca;
+                option.textContent = marca.nombre;
+                marcaSelect.appendChild(option);
+            });
+        }
+    }
+
+    function actualizarVersiones() {
+        const marcaId = marcaSelect.value;
+        versionSelect.innerHTML = '<option value="">Todas las versiones</option>';
+        
+        if (marcaId) {
+            const versionesFiltradas = versionesData.filter(v => v.marca_id == marcaId);
+            versionesFiltradas.forEach(version => {
+                const option = document.createElement('option');
+                option.value = version.id_version;
+                option.textContent = version.nombre;
+                versionSelect.appendChild(option);
+            });
+        }
+    }
+
+    categoriaSelect.addEventListener('change', function() {
+        actualizarSubcategorias();
+        actualizarMarcas();
+        actualizarVersiones();
+    });
+
+    subcategoriaSelect.addEventListener('change', function() {
+        actualizarMarcas();
+        actualizarVersiones();
+    });
+
+    marcaSelect.addEventListener('change', function() {
+        actualizarVersiones();
+    });
+});
+</script>
+{% endblock %}

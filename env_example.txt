@@ -1,0 +1,21 @@
+# Configuración de la aplicación
+FLASK_ENV=development
+SECRET_KEY=tu_clave_secreta_super_segura_aqui
+DATABASE_PATH=db/productos.db
+
+# Configuración de sesiones
+SESSION_COOKIE_SECURE=False
+SESSION_LIFETIME=3600
+
+# Configuración de logging
+LOG_LEVEL=INFO
+LOG_FILE=app.log
+
+# Configuración de seguridad
+WTF_CSRF_ENABLED=True
+WTF_CSRF_TIME_LIMIT=3600
+
+# Configuración para Render (producción)
+# FLASK_ENV=production
+# SESSION_COOKIE_SECURE=True
+# SECRET_KEY=clave_secreta_super_segura_2025_render_free

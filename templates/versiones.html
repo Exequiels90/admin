@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block title %}Versiones{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Versiones</h2>
+        <a href="{{ url_for('nueva_version') }}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Nueva Versión
+        </a>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Nombre</th>
+                            <th>Marca</th>
+                            <th>Subcategoría</th>
+                            <th>Categoría</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for version in versiones %}
+                        <tr>
+                            <td>{{ version.id_version }}</td>
+                            <td>{{ version.nombre }}</td>
+                            <td>{{ version.marca_nombre or 'Sin marca' }}</td>
+                            <td>{{ version.subcategoria_nombre or 'Sin subcategoría' }}</td>
+                            <td>{{ version.categoria_nombre or 'Sin categoría' }}</td>
+                            <td>
+                                <a href="#" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-edit"></i> Editar
+                                </a>
+                                <a href="#" class="btn btn-sm btn-outline-danger">
+                                    <i class="fas fa-trash"></i> Eliminar
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+
+

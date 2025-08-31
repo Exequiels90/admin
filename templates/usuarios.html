@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+
+{% block title %}Gestión de Usuarios - Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0">
+                    <i class="fas fa-users text-primary"></i> Gestión de Usuarios
+                </h1>
+                <div>
+                    <a href="{{ url_for('nuevo_usuario') }}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Nuevo Usuario
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Usuarios del Sistema</h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Usuario</th>
+                                    <th>Nombre Completo</th>
+                                    <th>Rol</th>
+                                    <th>Estado</th>
+                                    <th>Último Login</th>
+                                    <th>Fecha Creación</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for usuario in usuarios %}
+                                <tr>
+                                    <td>{{ usuario.id_usuario }}</td>
+                                    <td>
+                                        <strong>{{ usuario.username }}</strong>
+                                        {% if usuario.username == 'admin' %}
+                                            <span class="badge bg-warning">Principal</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ usuario.nombre_completo }}</td>
+                                    <td>
+                                        <span class="badge bg-{{ 'primary' if usuario.rol == 'admin' else 'success' if usuario.rol == 'vendedor' else 'info' }}">
+                                            {{ usuario.rol|title }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        {% if usuario.activo %}
+                                            <span class="badge bg-success">Activo</span>
+                                        {% else %}
+                                            <span class="badge bg-danger">Inactivo</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if usuario.ultimo_login %}
+                                            {{ usuario.ultimo_login|datetime }}
+                                        {% else %}
+                                            <span class="text-muted">Nunca</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ usuario.fecha_creacion|datetime }}</td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <a href="{{ url_for('editar_usuario', id_usuario=usuario.id_usuario) }}" 
+                                               class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            {% if usuario.username != 'admin' %}
+                                            <a href="{{ url_for('eliminar_usuario', id_usuario=usuario.id_usuario) }}" 
+                                               class="btn btn-sm btn-outline-danger"
+                                               onclick="return confirm('¿Estás seguro de que quieres desactivar este usuario?')">
+                                                <i class="fas fa-trash"></i>
+                                            </a>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
