@@ -3027,7 +3027,8 @@ def api_usuarios():
 # Iniciar sincronización automática si está habilitada
 if __name__ == "__main__":
     print("🚀 Iniciando servidor Flask Admin...")
-    print("📍 URL: http://127.0.0.1:5000")
+    port = int(os.environ.get('PORT', 5000))
+    print(f"📍 URL: http://0.0.0.0:{port}")
     print("🔑 Usuario: admin")
     print("🔑 Contraseña: admin123")
     print("=" * 50)
@@ -3036,9 +3037,13 @@ if __name__ == "__main__":
         start_sync_scheduler()
     
     try:
-        app.run(debug=app.config.get('DEBUG', False), 
-                host='127.0.0.1', 
-                port=5000, 
+        # Configuración para Render
+        port = int(os.environ.get('PORT', 5000))
+        debug = app.config.get('DEBUG', False)
+        
+        app.run(debug=debug, 
+                host='0.0.0.0',  # Permitir conexiones externas
+                port=port, 
                 use_reloader=False)  # Desactivar reloader para evitar problemas
     except KeyboardInterrupt:
         print("\n🛑 Servidor detenido por el usuario")
