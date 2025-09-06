@@ -340,6 +340,44 @@
     </div>
 </div>
 
+<!-- Modal para agregar proveedor -->
+<div class="modal fade" id="modalNuevoProveedor" tabindex="-1" aria-labelledby="modalNuevoProveedorLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalNuevoProveedorLabel">
+                    <i class="fas fa-plus text-primary"></i> Agregar Nuevo Proveedor
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="formNuevoProveedor">
+                    <div class="mb-3">
+                        <label for="nombre_proveedor" class="form-label">Nombre del Proveedor *</label>
+                        <input type="text" class="form-control" id="nombre_proveedor" name="nombre" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="telefono_proveedor" class="form-label">Teléfono</label>
+                        <input type="text" class="form-control" id="telefono_proveedor" name="telefono">
+                    </div>
+                    <div class="mb-3">
+                        <label for="email_proveedor" class="form-label">Email</label>
+                        <input type="email" class="form-control" id="email_proveedor" name="email">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times"></i> Cancelar
+                </button>
+                <button type="button" class="btn btn-primary" onclick="guardarProveedor()">
+                    <i class="fas fa-save"></i> Guardar Proveedor
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Otros modales aquí... -->
 
 <script>
@@ -819,6 +857,56 @@ function abrirModalVersion() {
 function abrirModalAdministracionCategorias() {
     console.log('Abriendo administración de categorías...');
     // Implementar
+}
+
+function guardarProveedor() {
+    const nombre = document.getElementById('nombre_proveedor').value;
+    const telefono = document.getElementById('telefono_proveedor').value;
+    const email = document.getElementById('email_proveedor').value;
+    
+    if (!nombre.trim()) {
+        alert('El nombre del proveedor es obligatorio');
+        return;
+    }
+    
+    const proveedorData = {
+        nombre: nombre.trim(),
+        telefono: telefono.trim(),
+        email: email.trim()
+    };
+    
+    fetch('/api/proveedores', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(proveedorData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Agregar el nuevo proveedor al select
+            const select = document.getElementById('id_proveedor');
+            const option = new Option(data.proveedor.nombre, data.proveedor.id_proveedor);
+            select.add(option);
+            select.value = data.proveedor.id_proveedor;
+            
+            // Limpiar el formulario
+            document.getElementById('formNuevoProveedor').reset();
+            
+            // Cerrar el modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('modalNuevoProveedor'));
+            modal.hide();
+            
+            alert('✅ Proveedor creado exitosamente');
+        } else {
+            alert('❌ Error al crear el proveedor: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('❌ Error al crear el proveedor');
+    });
 }
 
 function crearLote() {
