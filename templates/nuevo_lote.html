@@ -836,27 +836,381 @@ function cerrarModalAgregarProducto() {
 // Funciones para modales de categorías, marcas, etc.
 function abrirModalCategoria() {
     console.log('Abriendo modal categoría...');
-    // Implementar
+    // Crear modal dinámico para nueva categoría
+    const modalHtml = `
+        <div class="modal fade" id="modalNuevaCategoria" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Nueva Categoría</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="formNuevaCategoria">
+                            <div class="mb-3">
+                                <label class="form-label">Nombre *</label>
+                                <input type="text" class="form-control" id="nombre_categoria" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Descripción</label>
+                                <input type="text" class="form-control" id="descripcion_categoria">
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="button" class="btn btn-primary" onclick="guardarCategoria()">Guardar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Remover modal existente
+    const existing = document.getElementById('modalNuevaCategoria');
+    if (existing) existing.remove();
+    
+    // Agregar y mostrar modal
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    const modal = new bootstrap.Modal(document.getElementById('modalNuevaCategoria'));
+    modal.show();
 }
 
 function abrirModalSubcategoria() {
     console.log('Abriendo modal subcategoría...');
-    // Implementar
+    // Crear modal dinámico para nueva subcategoría
+    const modalHtml = `
+        <div class="modal fade" id="modalNuevaSubcategoria" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Nueva Subcategoría</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="formNuevaSubcategoria">
+                            <div class="mb-3">
+                                <label class="form-label">Nombre *</label>
+                                <input type="text" class="form-control" id="nombre_subcategoria" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Categoría *</label>
+                                <select class="form-control" id="categoria_subcategoria" required>
+                                    <option value="">Seleccionar categoría</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Descripción</label>
+                                <textarea class="form-control" id="descripcion_subcategoria" rows="3"></textarea>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="button" class="btn btn-primary" onclick="guardarSubcategoria()">Guardar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Remover modal existente
+    const existing = document.getElementById('modalNuevaSubcategoria');
+    if (existing) existing.remove();
+    
+    // Agregar y mostrar modal
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    const modal = new bootstrap.Modal(document.getElementById('modalNuevaSubcategoria'));
+    modal.show();
+    
+    // Cargar categorías
+    cargarCategorias();
 }
 
 function abrirModalMarca() {
     console.log('Abriendo modal marca...');
-    // Implementar
+    // Crear modal dinámico para nueva marca
+    const modalHtml = `
+        <div class="modal fade" id="modalNuevaMarca" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Nueva Marca</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="formNuevaMarca">
+                            <div class="mb-3">
+                                <label class="form-label">Nombre *</label>
+                                <input type="text" class="form-control" id="nombre_marca" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Subcategoría *</label>
+                                <select class="form-control" id="subcategoria_marca" required>
+                                    <option value="">Seleccionar subcategoría</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Descripción</label>
+                                <textarea class="form-control" id="descripcion_marca" rows="3"></textarea>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="button" class="btn btn-primary" onclick="guardarMarca()">Guardar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Remover modal existente
+    const existing = document.getElementById('modalNuevaMarca');
+    if (existing) existing.remove();
+    
+    // Agregar y mostrar modal
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    const modal = new bootstrap.Modal(document.getElementById('modalNuevaMarca'));
+    modal.show();
+    
+    // Cargar subcategorías
+    cargarSubcategorias();
 }
 
 function abrirModalVersion() {
     console.log('Abriendo modal versión...');
-    // Implementar
+    // Crear modal dinámico para nueva versión
+    const modalHtml = `
+        <div class="modal fade" id="modalNuevaVersion" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Nueva Versión</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="formNuevaVersion">
+                            <div class="mb-3">
+                                <label class="form-label">Nombre *</label>
+                                <input type="text" class="form-control" id="nombre_version" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Marca *</label>
+                                <select class="form-control" id="marca_version" required>
+                                    <option value="">Seleccionar marca</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Descripción</label>
+                                <textarea class="form-control" id="descripcion_version" rows="3"></textarea>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="button" class="btn btn-primary" onclick="guardarVersion()">Guardar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Remover modal existente
+    const existing = document.getElementById('modalNuevaVersion');
+    if (existing) existing.remove();
+    
+    // Agregar y mostrar modal
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    const modal = new bootstrap.Modal(document.getElementById('modalNuevaVersion'));
+    modal.show();
+    
+    // Cargar marcas
+    cargarMarcas();
 }
 
 function abrirModalAdministracionCategorias() {
     console.log('Abriendo administración de categorías...');
-    // Implementar
+    window.open('/categorias', '_blank');
+}
+
+// Funciones para guardar
+function guardarCategoria() {
+    const nombre = document.getElementById('nombre_categoria').value;
+    const descripcion = document.getElementById('descripcion_categoria').value;
+    
+    if (!nombre.trim()) {
+        alert('El nombre es obligatorio');
+        return;
+    }
+    
+    fetch('/api/categorias', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({nombre: nombre, descripcion: descripcion})
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Categoría creada exitosamente');
+            bootstrap.Modal.getInstance(document.getElementById('modalNuevaCategoria')).hide();
+            location.reload();
+        } else {
+            alert('Error: ' + (data.message || 'Error desconocido'));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error al crear la categoría');
+    });
+}
+
+function guardarSubcategoria() {
+    const nombre = document.getElementById('nombre_subcategoria').value;
+    const categoria_id = document.getElementById('categoria_subcategoria').value;
+    const descripcion = document.getElementById('descripcion_subcategoria').value;
+    
+    if (!nombre.trim() || !categoria_id) {
+        alert('El nombre y la categoría son obligatorios');
+        return;
+    }
+    
+    fetch('/api/subcategorias', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({nombre: nombre, categoria_id: categoria_id, descripcion: descripcion})
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Subcategoría creada exitosamente');
+            bootstrap.Modal.getInstance(document.getElementById('modalNuevaSubcategoria')).hide();
+            location.reload();
+        } else {
+            alert('Error: ' + (data.message || 'Error desconocido'));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error al crear la subcategoría');
+    });
+}
+
+function guardarMarca() {
+    const nombre = document.getElementById('nombre_marca').value;
+    const subcategoria_id = document.getElementById('subcategoria_marca').value;
+    const descripcion = document.getElementById('descripcion_marca').value;
+    
+    if (!nombre.trim() || !subcategoria_id) {
+        alert('El nombre y la subcategoría son obligatorios');
+        return;
+    }
+    
+    fetch('/api/marcas', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({nombre: nombre, subcategoria_id: subcategoria_id, descripcion: descripcion})
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Marca creada exitosamente');
+            bootstrap.Modal.getInstance(document.getElementById('modalNuevaMarca')).hide();
+            location.reload();
+        } else {
+            alert('Error: ' + (data.message || 'Error desconocido'));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error al crear la marca');
+    });
+}
+
+function guardarVersion() {
+    const nombre = document.getElementById('nombre_version').value;
+    const marca_id = document.getElementById('marca_version').value;
+    const descripcion = document.getElementById('descripcion_version').value;
+    
+    if (!nombre.trim() || !marca_id) {
+        alert('El nombre y la marca son obligatorios');
+        return;
+    }
+    
+    fetch('/api/versiones', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({nombre: nombre, marca_id: marca_id, descripcion: descripcion})
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Versión creada exitosamente');
+            bootstrap.Modal.getInstance(document.getElementById('modalNuevaVersion')).hide();
+            location.reload();
+        } else {
+            alert('Error: ' + (data.message || 'Error desconocido'));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error al crear la versión');
+    });
+}
+
+// Funciones para cargar datos
+function cargarCategorias() {
+    fetch('/api/categorias')
+    .then(response => response.json())
+    .then(data => {
+        const select = document.getElementById('categoria_subcategoria');
+        if (select && data.categorias) {
+            select.innerHTML = '<option value="">Seleccionar categoría</option>';
+            data.categorias.forEach(cat => {
+                const option = document.createElement('option');
+                option.value = cat[0];
+                option.textContent = cat[1];
+                select.appendChild(option);
+            });
+        }
+    })
+    .catch(error => console.error('Error al cargar categorías:', error));
+}
+
+function cargarSubcategorias() {
+    fetch('/api/subcategorias')
+    .then(response => response.json())
+    .then(data => {
+        const select = document.getElementById('subcategoria_marca');
+        if (select && data.subcategorias) {
+            select.innerHTML = '<option value="">Seleccionar subcategoría</option>';
+            data.subcategorias.forEach(sub => {
+                const option = document.createElement('option');
+                option.value = sub[0];
+                option.textContent = sub[1];
+                select.appendChild(option);
+            });
+        }
+    })
+    .catch(error => console.error('Error al cargar subcategorías:', error));
+}
+
+function cargarMarcas() {
+    fetch('/api/marcas')
+    .then(response => response.json())
+    .then(data => {
+        const select = document.getElementById('marca_version');
+        if (select && data.marcas) {
+            select.innerHTML = '<option value="">Seleccionar marca</option>';
+            data.marcas.forEach(marca => {
+                const option = document.createElement('option');
+                option.value = marca[0];
+                option.textContent = marca[1];
+                select.appendChild(option);
+            });
+        }
+    })
+    .catch(error => console.error('Error al cargar marcas:', error));
 }
 
 
