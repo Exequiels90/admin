@@ -1,115 +1,59 @@
 {% extends "base.html" %}
 
-{% block title %}Editar Usuario - Admin{% endblock %}
+{% block title %}Editar Usuario{% endblock %}
 
 {% block content %}
 <div class="container-fluid">
     <div class="row">
         <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h1 class="h3 mb-0">
-                    <i class="fas fa-user-edit text-primary"></i> Editar Usuario
-                </h1>
-                <a href="{{ url_for('listar_usuarios') }}" class="btn btn-secondary">
-                    <i class="fas fa-arrow-left"></i> Volver a Usuarios
-                </a>
-            </div>
-        </div>
-    </div>
-
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            {% for category, message in messages %}
-                <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
-                    {{ message }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                </div>
-            {% endfor %}
-        {% endif %}
-    {% endwith %}
-
-    <div class="row">
-        <div class="col-12">
-            <div class="card shadow">
-                <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-primary">Información del Usuario</h6>
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="fas fa-edit"></i> Editar Usuario
+                    </h3>
                 </div>
                 <div class="card-body">
                     <form method="POST">
                         <div class="row">
                             <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="username" class="form-label">Nombre de Usuario</label>
-                                    <input type="text" class="form-control" id="username" value="{{ usuario.username }}" readonly>
-                                    <div class="form-text">El nombre de usuario no se puede cambiar</div>
+                                <div class="form-group mb-3">
+                                    <label for="username" class="form-label">Usuario *</label>
+                                    <input type="text" class="form-control" id="username" name="username" value="{{ usuario[1] }}" required>
                                 </div>
                             </div>
                             <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="nombre_completo" class="form-label">Nombre Completo *</label>
-                                    <input type="text" class="form-control" id="nombre_completo" name="nombre_completo" value="{{ usuario.nombre_completo }}" required>
-                                    <div class="form-text">Nombre y apellido del usuario</div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="mb-3">
+                                <div class="form-group mb-3">
                                     <label for="password" class="form-label">Nueva Contraseña</label>
-                                    <input type="password" class="form-control" id="password" name="password">
-                                    <div class="form-text">Dejar vacío para mantener la contraseña actual</div>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="rol" class="form-label">Rol *</label>
-                                    <select class="form-select" id="rol" name="rol" required>
-                                        <option value="vendedor" {% if usuario.rol == 'vendedor' %}selected{% endif %}>Vendedor</option>
-                                        <option value="admin" {% if usuario.rol == 'admin' %}selected{% endif %}>Administrador</option>
-                                        <option value="supervisor" {% if usuario.rol == 'supervisor' %}selected{% endif %}>Supervisor</option>
-                                    </select>
-                                    <div class="form-text">Rol que determina los permisos del usuario</div>
+                                    <input type="password" class="form-control" id="password" name="password" placeholder="Dejar vacío para mantener la actual">
                                 </div>
                             </div>
                         </div>
-
                         <div class="row">
                             <div class="col-md-6">
-                                <div class="mb-3">
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" id="activo" name="activo" {% if usuario.activo %}checked{% endif %}>
-                                        <label class="form-check-label" for="activo">
-                                            Usuario Activo
-                                        </label>
-                                        <div class="form-text">Marcar si el usuario puede acceder al sistema</div>
-                                    </div>
+                                <div class="form-group mb-3">
+                                    <label for="nombre" class="form-label">Nombre *</label>
+                                    <input type="text" class="form-control" id="nombre" name="nombre" value="{{ usuario[3] }}" required>
                                 </div>
                             </div>
                             <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label class="form-label">Información del Usuario</label>
-                                    <div class="form-control-plaintext">
-                                        <small class="text-muted">
-                                            <strong>ID:</strong> {{ usuario.id_usuario }}<br>
-                                            <strong>Fecha Creación:</strong> {{ usuario.fecha_creacion|datetime if usuario.fecha_creacion else 'N/A' }}<br>
-                                            <strong>Último Login:</strong> {{ usuario.ultimo_login|datetime if usuario.ultimo_login else 'Nunca' }}
-                                        </small>
-                                    </div>
+                                <div class="form-group mb-3">
+                                    <label for="rol" class="form-label">Rol *</label>
+                                    <select class="form-control" id="rol" name="rol" required>
+                                        <option value="admin" {% if usuario[4] == 'admin' %}selected{% endif %}>Administrador</option>
+                                        <option value="vendedor" {% if usuario[4] == 'vendedor' %}selected{% endif %}>Vendedor</option>
+                                        <option value="pos" {% if usuario[4] == 'pos' %}selected{% endif %}>POS</option>
+                                    </select>
                                 </div>
                             </div>
                         </div>
-
                         <div class="row">
                             <div class="col-12">
-                                <div class="d-flex justify-content-end gap-2">
-                                    <a href="{{ url_for('listar_usuarios') }}" class="btn btn-secondary">
-                                        <i class="fas fa-times"></i> Cancelar
-                                    </a>
-                                    <button type="submit" class="btn btn-primary">
-                                        <i class="fas fa-save"></i> Guardar Cambios
-                                    </button>
-                                </div>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save"></i> Guardar Cambios
+                                </button>
+                                <a href="/usuarios" class="btn btn-secondary">
+                                    <i class="fas fa-arrow-left"></i> Volver
+                                </a>
                             </div>
                         </div>
                     </form>
@@ -119,4 +63,3 @@
     </div>
 </div>
 {% endblock %}
-

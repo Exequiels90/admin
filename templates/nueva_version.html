@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Nuevo Cliente{% endblock %}
+{% block title %}Nueva Versión{% endblock %}
 
 {% block content %}
 <div class="container-fluid">
@@ -9,7 +9,7 @@
             <div class="card">
                 <div class="card-header">
                     <h3 class="card-title">
-                        <i class="fas fa-plus"></i> Nuevo Cliente
+                        <i class="fas fa-plus"></i> Nueva Versión
                     </h3>
                 </div>
                 <div class="card-body">
@@ -17,37 +17,36 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="form-group mb-3">
-                                    <label for="nombre" class="form-label">Nombre *</label>
+                                    <label for="nombre" class="form-label">Nombre de la Versión *</label>
                                     <input type="text" class="form-control" id="nombre" name="nombre" required>
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="form-group mb-3">
-                                    <label for="telefono" class="form-label">Teléfono</label>
-                                    <input type="text" class="form-control" id="telefono" name="telefono">
+                                    <label for="marca_id" class="form-label">Marca *</label>
+                                    <select class="form-control" id="marca_id" name="marca_id" required>
+                                        <option value="">Seleccionar marca</option>
+                                        {% for marca in marcas %}
+                                        <option value="{{ marca[0] }}">{{ marca[1] }}</option>
+                                        {% endfor %}
+                                    </select>
                                 </div>
                             </div>
                         </div>
                         <div class="row">
-                            <div class="col-md-6">
+                            <div class="col-12">
                                 <div class="form-group mb-3">
-                                    <label for="email" class="form-label">Email</label>
-                                    <input type="email" class="form-control" id="email" name="email">
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-group mb-3">
-                                    <label for="direccion" class="form-label">Dirección</label>
-                                    <input type="text" class="form-control" id="direccion" name="direccion">
+                                    <label for="descripcion" class="form-label">Descripción</label>
+                                    <textarea class="form-control" id="descripcion" name="descripcion" rows="3"></textarea>
                                 </div>
                             </div>
                         </div>
                         <div class="row">
                             <div class="col-12">
                                 <button type="submit" class="btn btn-primary">
-                                    <i class="fas fa-save"></i> Guardar Cliente
+                                    <i class="fas fa-save"></i> Guardar Versión
                                 </button>
-                                <a href="/clientes" class="btn btn-secondary">
+                                <a href="/versiones" class="btn btn-secondary">
                                     <i class="fas fa-arrow-left"></i> Volver
                                 </a>
                             </div>

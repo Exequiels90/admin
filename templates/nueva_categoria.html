@@ -3,15 +3,45 @@
 {% block title %}Nueva Categoría{% endblock %}
 
 {% block content %}
-<div class="container">
-    <h1 class="mb-4">Agregar Nueva Categoría</h1>
-    <form method="post">
-        <div class="mb-3">
-            <label for="nombre" class="form-label">Nombre de la categoría</label>
-            <input type="text" class="form-control" id="nombre" name="nombre" required>
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="fas fa-plus"></i> Nueva Categoría
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label for="nombre" class="form-label">Nombre de la Categoría *</label>
+                                    <input type="text" class="form-control" id="nombre" name="nombre" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label for="descripcion" class="form-label">Descripción</label>
+                                    <input type="text" class="form-control" id="descripcion" name="descripcion">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-12">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save"></i> Guardar Categoría
+                                </button>
+                                <a href="/categorias" class="btn btn-secondary">
+                                    <i class="fas fa-arrow-left"></i> Volver
+                                </a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
         </div>
-        <button type="submit" class="btn btn-primary">Guardar</button>
-        <a href="/categorias" class="btn btn-secondary">Volver</a>
-    </form>
+    </div>
 </div>
 {% endblock %}
