@@ -1163,54 +1163,72 @@ function cargarCategorias() {
     fetch('/api/categorias')
     .then(response => response.json())
     .then(data => {
+        console.log('Datos de categorías recibidos:', data);
         const select = document.getElementById('categoria_subcategoria');
-        if (select && data.categorias) {
+        if (select) {
             select.innerHTML = '<option value="">Seleccionar categoría</option>';
-            data.categorias.forEach(cat => {
-                const option = document.createElement('option');
-                option.value = cat[0];
-                option.textContent = cat[1];
-                select.appendChild(option);
-            });
+            if (data.categorias && Array.isArray(data.categorias)) {
+                data.categorias.forEach(cat => {
+                    const option = document.createElement('option');
+                    option.value = cat[0];
+                    option.textContent = cat[1];
+                    select.appendChild(option);
+                });
+            }
         }
     })
-    .catch(error => console.error('Error al cargar categorías:', error));
+    .catch(error => {
+        console.error('Error al cargar categorías:', error);
+        alert('Error al cargar categorías');
+    });
 }
 
 function cargarSubcategorias() {
     fetch('/api/subcategorias')
     .then(response => response.json())
     .then(data => {
+        console.log('Datos de subcategorías recibidos:', data);
         const select = document.getElementById('subcategoria_marca');
-        if (select && data.subcategorias) {
+        if (select) {
             select.innerHTML = '<option value="">Seleccionar subcategoría</option>';
-            data.subcategorias.forEach(sub => {
-                const option = document.createElement('option');
-                option.value = sub[0];
-                option.textContent = sub[1];
-                select.appendChild(option);
-            });
+            if (data.subcategorias && Array.isArray(data.subcategorias)) {
+                data.subcategorias.forEach(sub => {
+                    const option = document.createElement('option');
+                    option.value = sub[0];
+                    option.textContent = sub[1];
+                    select.appendChild(option);
+                });
+            }
         }
     })
-    .catch(error => console.error('Error al cargar subcategorías:', error));
+    .catch(error => {
+        console.error('Error al cargar subcategorías:', error);
+        alert('Error al cargar subcategorías');
+    });
 }
 
 function cargarMarcas() {
     fetch('/api/marcas')
     .then(response => response.json())
     .then(data => {
+        console.log('Datos de marcas recibidos:', data);
         const select = document.getElementById('marca_version');
-        if (select && data.marcas) {
+        if (select) {
             select.innerHTML = '<option value="">Seleccionar marca</option>';
-            data.marcas.forEach(marca => {
-                const option = document.createElement('option');
-                option.value = marca[0];
-                option.textContent = marca[1];
-                select.appendChild(option);
-            });
+            if (data.marcas && Array.isArray(data.marcas)) {
+                data.marcas.forEach(marca => {
+                    const option = document.createElement('option');
+                    option.value = marca[0];
+                    option.textContent = marca[1];
+                    select.appendChild(option);
+                });
+            }
         }
     })
-    .catch(error => console.error('Error al cargar marcas:', error));
+    .catch(error => {
+        console.error('Error al cargar marcas:', error);
+        alert('Error al cargar marcas');
+    });
 }
 
 
