@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Categorías{% endblock %}
+{% block title %}Subcategorías{% endblock %}
 
 {% block content %}
 <div class="container-fluid">
@@ -9,34 +9,42 @@
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h3 class="card-title">
-                        <i class="fas fa-tags"></i> Categorías
+                        <i class="fas fa-tags"></i> Subcategorías
                     </h3>
-                    <a href="/nueva_categoria" class="btn btn-primary">
-                        <i class="fas fa-plus"></i> Nueva Categoría
+                    <a href="/nueva_subcategoria" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Nueva Subcategoría
                     </a>
                 </div>
                 <div class="card-body">
-                    {% if categorias %}
+                    {% if subcategorias %}
                     <div class="table-responsive">
                         <table class="table table-striped table-hover">
                             <thead class="table-dark">
                                 <tr>
                                     <th>ID</th>
                                     <th>Nombre</th>
+                                    <th>Categoría</th>
                                     <th>Descripción</th>
                                     <th>Acciones</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {% for categoria in categorias %}
+                                {% for subcategoria in subcategorias %}
                                 <tr>
-                                    <td>{{ categoria[0] }}</td>
-                                    <td>{{ categoria[1] }}</td>
-                                    <td>{{ categoria[2] or 'Sin descripción' }}</td>
+                                    <td>{{ subcategoria[0] }}</td>
+                                    <td>{{ subcategoria[1] }}</td>
                                     <td>
-                                        <a href="/eliminar_categoria/{{ categoria[0] }}" 
+                                        {% for categoria in categorias %}
+                                            {% if categoria[0] == subcategoria[2] %}
+                                                {{ categoria[1] }}
+                                            {% endif %}
+                                        {% endfor %}
+                                    </td>
+                                    <td>{{ subcategoria[3] or 'Sin descripción' }}</td>
+                                    <td>
+                                        <a href="/eliminar_subcategoria/{{ subcategoria[0] }}" 
                                            class="btn btn-sm btn-danger"
-                                           onclick="return confirm('¿Estás seguro de eliminar esta categoría?')">
+                                           onclick="return confirm('¿Estás seguro de eliminar esta subcategoría?')">
                                             <i class="fas fa-trash"></i>
                                         </a>
                                     </td>
@@ -48,7 +56,7 @@
                     {% else %}
                     <div class="alert alert-info text-center">
                         <i class="fas fa-info-circle"></i>
-                        No hay categorías registradas.
+                        No hay subcategorías registradas.
                     </div>
                     {% endif %}
                 </div>
@@ -57,3 +65,4 @@
     </div>
 </div>
 {% endblock %}
+

@@ -1,130 +1,61 @@
 {% extends "base.html" %}
 
-{% block title %}Nuevo Cliente POS - Admin{% endblock %}
+{% block title %}Nuevo Cliente POS{% endblock %}
 
 {% block content %}
 <div class="container-fluid">
     <div class="row">
         <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h1 class="h3">Nuevo Cliente POS</h1>
-                <a href="{{ url_for('clientes_pos') }}" class="btn btn-secondary">
-                    <i class="fas fa-arrow-left"></i> Volver
-                </a>
-            </div>
-        </div>
-    </div>
-
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            {% for category, message in messages %}
-                <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
-                    {{ message }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                </div>
-            {% endfor %}
-        {% endif %}
-    {% endwith %}
-
-    <div class="row">
-        <div class="col-12">
-            <div class="card shadow">
-                <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-primary">Registrar Nuevo Cliente POS</h6>
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="fas fa-plus"></i> Nuevo Cliente POS
+                    </h3>
                 </div>
                 <div class="card-body">
                     <form method="POST">
                         <div class="row">
                             <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="nombre" class="form-label">Nombre del Cliente *</label>
+                                <div class="form-group mb-3">
+                                    <label for="nombre" class="form-label">Nombre *</label>
                                     <input type="text" class="form-control" id="nombre" name="nombre" required>
-                                    <div class="form-text">Nombre descriptivo para identificar el cliente POS</div>
                                 </div>
                             </div>
                             <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="url" class="form-label">URL del Cliente *</label>
-                                    <input type="url" class="form-control" id="url" name="url" required 
-                                           placeholder="http://localhost:5000 o https://tu-pos.com">
-                                    <div class="form-text">URL completa donde está ejecutándose el cliente POS</div>
+                                <div class="form-group mb-3">
+                                    <label for="telefono" class="form-label">Teléfono</label>
+                                    <input type="text" class="form-control" id="telefono" name="telefono">
                                 </div>
                             </div>
                         </div>
-                        
-                        <div class="mb-3">
-                            <label for="descripcion" class="form-label">Descripción</label>
-                            <textarea class="form-control" id="descripcion" name="descripcion" rows="3" 
-                                      placeholder="Descripción opcional del cliente POS (ubicación, características, etc.)"></textarea>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label for="email" class="form-label">Email</label>
+                                    <input type="email" class="form-control" id="email" name="email">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label for="direccion" class="form-label">Dirección</label>
+                                    <input type="text" class="form-control" id="direccion" name="direccion">
+                                </div>
+                            </div>
                         </div>
-
-                        <div class="alert alert-info">
-                            <h6><i class="fas fa-info-circle"></i> Información Importante</h6>
-                            <ul class="mb-0">
-                                <li>El cliente POS debe estar ejecutándose y accesible desde esta URL</li>
-                                <li>La URL debe incluir el protocolo (http:// o https://)</li>
-                                <li>El cliente POS debe tener configurado el endpoint de sincronización</li>
-                                <li>Se recomienda usar HTTPS en producción</li>
-                            </ul>
-                        </div>
-
-                        <div class="d-flex justify-content-between">
-                            <a href="{{ url_for('clientes_pos') }}" class="btn btn-secondary">
-                                <i class="fas fa-times"></i> Cancelar
-                            </a>
-                            <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-save"></i> Registrar Cliente
-                            </button>
+                        <div class="row">
+                            <div class="col-12">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save"></i> Guardar Cliente
+                                </button>
+                                <a href="/clientes_pos" class="btn btn-secondary">
+                                    <i class="fas fa-arrow-left"></i> Volver
+                                </a>
+                            </div>
                         </div>
                     </form>
                 </div>
             </div>
         </div>
     </div>
-
-    <!-- Ejemplo de configuración -->
-    <div class="row mt-4">
-        <div class="col-12">
-            <div class="card shadow">
-                <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-primary">Ejemplo de Configuración del Cliente POS</h6>
-                </div>
-                <div class="card-body">
-                    <p>Para que el cliente POS pueda sincronizarse, debe tener configurado en su archivo <code>config.py</code>:</p>
-                    
-                    <div class="bg-light p-3 rounded">
-                        <pre><code># Configuración del servidor admin
-ADMIN_SERVER_URL = "https://tu-admin-app.onrender.com"  # URL de este admin
-
-# Configuración de sincronización
-SYNC_INTERVAL = 300  # 5 minutos en segundos</code></pre>
-                    </div>
-                    
-                    <p class="mt-3">Y debe tener habilitada la sincronización automática en su aplicación.</p>
-                </div>
-            </div>
-        </div>
-    </div>
 </div>
-
-<script>
-// Validar URL antes de enviar
-document.getElementById('url').addEventListener('blur', function() {
-    const url = this.value;
-    if (url && !url.startsWith('http://') && !url.startsWith('https://')) {
-        this.setCustomValidity('La URL debe comenzar con http:// o https://');
-    } else {
-        this.setCustomValidity('');
-    }
-});
-
-// Probar conexión
-document.getElementById('url').addEventListener('change', function() {
-    const url = this.value;
-    if (url && (url.startsWith('http://') || url.startsWith('https://'))) {
-        // Aquí se podría agregar una función para probar la conexión
-        console.log('URL válida:', url);
-    }
-});
-</script>
 {% endblock %}

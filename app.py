@@ -1915,39 +1915,57 @@ def eliminar_producto(id_producto):
 # -------------------
 # API ROUTES (EXISTENTES)
 # -------------------
-@app.route("/api/proveedores", methods=["POST"])
-def api_crear_proveedor():
-    try:
-        data = request.get_json()
-        nombre = data.get("nombre")
-        telefono = data.get("telefono", "")
-        email = data.get("email", "")
-        
-        if not nombre:
-            return jsonify({"success": False, "message": "El nombre es obligatorio"})
-        
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        cursor.execute("""
-            INSERT INTO proveedores (nombre, telefono, email)
-            VALUES (?, ?, ?)
-        """, (nombre, telefono, email))
-        
-        id_proveedor = cursor.lastrowid
-        conn.commit()
-        conn.close()
-        
-        return jsonify({
-            "success": True,
-            "proveedor": {
-                "id_proveedor": id_proveedor,
-                "nombre": nombre,
-                "telefono": telefono,
-                "email": email
-            }
-        })
-    except Exception as e:
-        return jsonify({"success": False, "message": str(e)})
+@app.route("/api/proveedores", methods=["GET", "POST"])
+def api_proveedores():
+    if request.method == "GET":
+        """Endpoint para obtener proveedores"""
+        try:
+            conn = get_db_connection()
+            proveedores = conn.execute("""
+                SELECT id_proveedor, nombre, telefono, email
+                FROM proveedores
+                ORDER BY nombre
+            """).fetchall()
+            conn.close()
+            
+            return jsonify([dict(proveedor) for proveedor in proveedores])
+            
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+    
+    elif request.method == "POST":
+        """Endpoint para crear proveedores"""
+        try:
+            data = request.get_json()
+            nombre = data.get("nombre")
+            telefono = data.get("telefono", "")
+            email = data.get("email", "")
+            
+            if not nombre:
+                return jsonify({"success": False, "message": "El nombre es obligatorio"})
+            
+            conn = get_db_connection()
+            cursor = conn.cursor()
+            cursor.execute("""
+                INSERT INTO proveedores (nombre, telefono, email)
+                VALUES (?, ?, ?)
+            """, (nombre, telefono, email))
+            
+            id_proveedor = cursor.lastrowid
+            conn.commit()
+            conn.close()
+            
+            return jsonify({
+                "success": True,
+                "proveedor": {
+                    "id_proveedor": id_proveedor,
+                    "nombre": nombre,
+                    "telefono": telefono,
+                    "email": email
+                }
+            })
+        except Exception as e:
+            return jsonify({"success": False, "message": str(e)})
 
 @app.route("/api/productos", methods=["POST"])
 def api_crear_producto():
