@@ -524,7 +524,15 @@ def api_productos():
         
         conn.close()
         
-        return jsonify([dict(p) for p in productos])
+        # Convertir a diccionario y mapear precio_venta a precio para compatibilidad con POS
+        productos_dict = []
+        for p in productos:
+            producto_dict = dict(p)
+            # Mapear precio_venta a precio para compatibilidad con POS
+            producto_dict['precio'] = producto_dict.get('precio_venta', 0)
+            productos_dict.append(producto_dict)
+        
+        return jsonify(productos_dict)
         
     except Exception as e:
         return jsonify({"error": str(e)}), 500
