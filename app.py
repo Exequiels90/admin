@@ -872,17 +872,22 @@ def api_ventas_batch():
                 # Insertar venta principal
                 cursor = conn.execute("""
                     INSERT INTO ventas (
-                        id_venta, fecha_venta, total, id_usuario, metodo_pago, 
+                        fecha_venta, total, id_usuario, efectivo, transferencia, credito, prestamo_personal,
                         cliente_id, sincronizado, fecha_sincronizacion
-                    ) VALUES (?, ?, ?, ?, ?, ?, 1, CURRENT_TIMESTAMP)
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, CURRENT_TIMESTAMP)
                 """, (
-                    venta_data['id_venta'],
                     venta_data['fecha_venta'],
                     venta_data['total'],
                     venta_data['id_usuario'],
-                    venta_data.get('metodo_pago', 'efectivo'),
+                    venta_data.get('efectivo', 0),
+                    venta_data.get('transferencia', 0),
+                    venta_data.get('credito', 0),
+                    venta_data.get('prestamo_personal', 0),
                     venta_data.get('cliente_id')
                 ))
+                
+                # Obtener el ID de la venta insertada
+                venta_id = cursor.lastrowid
                 
                 # Insertar detalles de la venta
                 for item in venta_data.get('items', []):
@@ -891,7 +896,7 @@ def api_ventas_batch():
                             venta_id, producto_id, cantidad, precio_unitario, subtotal
                         ) VALUES (?, ?, ?, ?, ?)
                     """, (
-                        venta_data['id_venta'],
+                        venta_id,
                         item['id_producto'],
                         item['cantidad'],
                         item['precio_unitario'],
