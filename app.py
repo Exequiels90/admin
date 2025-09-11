@@ -922,6 +922,38 @@ def api_ventas_batch():
         return jsonify({"success": False, "error": str(e)}), 500
 
 # -------------------
+# ENDPOINT TEMPORAL PARA INICIALIZACIÓN
+# -------------------
+@app.route("/api/init_db", methods=["POST"])
+def init_db():
+    """Endpoint temporal para inicializar la base de datos"""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # Crear la tabla detalles_venta
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS detalles_venta (
+            id_detalle INTEGER PRIMARY KEY AUTOINCREMENT,
+            venta_id INTEGER NOT NULL,
+            producto_id INTEGER NOT NULL,
+            cantidad REAL NOT NULL,
+            precio_unitario REAL NOT NULL,
+            subtotal REAL NOT NULL,
+            FOREIGN KEY (venta_id) REFERENCES ventas (id_venta),
+            FOREIGN KEY (producto_id) REFERENCES productos (id_producto)
+        )
+        """)
+        
+        conn.commit()
+        conn.close()
+        
+        return jsonify({"success": True, "message": "Base de datos inicializada correctamente"})
+        
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+# -------------------
 # SINCRONIZACIÓN MANUAL
 # -------------------
 @app.route("/sync_manual")
