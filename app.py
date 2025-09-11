@@ -872,7 +872,7 @@ def api_ventas_batch():
                 # Insertar venta principal
                 cursor = conn.execute("""
                     INSERT INTO ventas (
-                        fecha_venta, total, id_usuario, efectivo, transferencia, credito, prestamo_personal,
+                        fecha_venta, total, usuario_id, efectivo, transferencia, credito, prestamo_personal,
                         cliente_id, sincronizado, fecha_sincronizacion
                     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, CURRENT_TIMESTAMP)
                 """, (
