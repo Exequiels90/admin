@@ -1593,7 +1593,7 @@ def ventas():
         conn = get_db_connection()
         ventas = conn.execute("""
             SELECT v.*, c.nombre AS cliente_nombre,
-                   (SELECT COUNT(*) FROM detalles_venta vd WHERE vd.venta_id = v.id_venta) AS items
+                   (SELECT SUM(vd.cantidad) FROM detalles_venta vd WHERE vd.venta_id = v.id_venta) AS items
             FROM ventas v
             LEFT JOIN clientes c ON v.cliente_id = c.id_cliente
             ORDER BY v.fecha_venta DESC
@@ -1691,33 +1691,39 @@ def nueva_venta():
                          today=today)
 
 @app.route("/ver_venta/<int:id_venta>")
+@login_required
 def ver_venta(id_venta):
-    conn = get_db_connection()
-    
-    # Obtener información de la venta
-    venta = conn.execute("""
-        SELECT v.*, c.nombre AS cliente_nombre, c.telefono, c.email
-        FROM ventas v
-        LEFT JOIN clientes c ON v.cliente_id = c.id_cliente
-        WHERE v.id_venta = ?
-    """, (id_venta,)).fetchone()
-    
-    if not venta:
+    try:
+        conn = get_db_connection()
+        
+        # Obtener información de la venta
+        venta = conn.execute("""
+            SELECT v.*, c.nombre AS cliente_nombre
+            FROM ventas v
+            LEFT JOIN clientes c ON v.cliente_id = c.id_cliente
+            WHERE v.id_venta = ?
+        """, (id_venta,)).fetchone()
+        
+        if not venta:
+            conn.close()
+            flash("Venta no encontrada", "danger")
+            return redirect(url_for("ventas"))
+        
+        # Obtener detalles de la venta
+        detalles = conn.execute("""
+            SELECT vd.*, p.codigo, p.nombre AS producto_nombre
+            FROM detalles_venta vd
+            JOIN productos p ON vd.producto_id = p.id_producto
+            WHERE vd.venta_id = ?
+            ORDER BY p.nombre
+        """, (id_venta,)).fetchall()
+        
         conn.close()
-        flash("Venta no encontrada", "danger")
+        return render_template("ver_venta.html", venta=venta, detalles=detalles)
+    except Exception as e:
+        print(f"Error en ver_venta: {e}")
+        flash(f"Error al cargar la venta: {e}", "danger")
         return redirect(url_for("ventas"))
-    
-    # Obtener detalles de la venta
-    detalles = conn.execute("""
-        SELECT vd.*, p.codigo, p.nombre AS producto_nombre
-        FROM detalles_venta vd
-        JOIN productos p ON vd.producto_id = p.id_producto
-        WHERE vd.venta_id = ?
-        ORDER BY p.nombre
-    """, (id_venta,)).fetchall()
-    
-    conn.close()
-    return render_template("ver_venta.html", venta=venta, detalles=detalles)
 
 @app.route("/eliminar_venta/<int:id_venta>")
 def eliminar_venta(id_venta):

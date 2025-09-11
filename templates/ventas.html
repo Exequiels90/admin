@@ -50,7 +50,10 @@
                                 {% for venta in ventas %}
                                 <tr>
                                     <td><strong>#{{ venta.id_venta }}</strong></td>
-                                    <td>{{ venta.fecha_venta }}</td>
+                                    <td>
+                                        {{ venta.fecha_venta[:10] }}<br>
+                                        <small class="text-muted">{{ venta.fecha_venta[11:19] }}</small>
+                                    </td>
                                     <td>
                                         {% if venta.cliente_nombre %}
                                             {{ venta.cliente_nombre }}
@@ -65,12 +68,18 @@
                                         <strong>${{ "%.2f"|format(venta.total) }}</strong>
                                     </td>
                                     <td>
-                                        <span class="badge bg-secondary">
-                                            {% if venta.efectivo > 0 %}Efectivo{% endif %}
-                                            {% if venta.transferencia > 0 %}Transferencia{% endif %}
-                                            {% if venta.credito > 0 %}Crédito{% endif %}
-                                            {% if venta.prestamo_personal > 0 %}Préstamo{% endif %}
-                                        </span>
+                                        {% set metodos = [] %}
+                                        {% if venta.efectivo > 0 %}{{ metodos.append('Efectivo') or '' }}{% endif %}
+                                        {% if venta.transferencia > 0 %}{{ metodos.append('Transferencia') or '' }}{% endif %}
+                                        {% if venta.credito > 0 %}{{ metodos.append('Crédito') or '' }}{% endif %}
+                                        {% if venta.prestamo_personal > 0 %}{{ metodos.append('Préstamo') or '' }}{% endif %}
+                                        {% if metodos|length > 1 %}
+                                            <span class="badge bg-warning">Mixto</span>
+                                        {% elif metodos|length == 1 %}
+                                            <span class="badge bg-success">{{ metodos[0] }}</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">No especificado</span>
+                                        {% endif %}
                                     </td>
                                     <td class="text-center">
                                         <div class="btn-group" role="group">

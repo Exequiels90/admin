@@ -8,7 +8,7 @@
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h2>Detalles de la Venta #{{ venta.id_venta }}</h2>
                 <div>
-                    <a href="{{ url_for('listar_ventas') }}" class="btn btn-secondary">
+                    <a href="{{ url_for('ventas') }}" class="btn btn-secondary">
                         ← Volver a Ventas
                     </a>
                     <button class="btn btn-primary ms-2" onclick="window.print()">
@@ -45,10 +45,6 @@
                                     <td><strong>Fecha de Venta:</strong></td>
                                     <td>{{ venta.fecha_venta }}</td>
                                 </tr>
-                                <tr>
-                                    <td><strong>Fecha de Registro:</strong></td>
-                                    <td>{{ venta.fecha_registro }}</td>
-                                </tr>
                             </table>
                         </div>
                         <div class="col-md-6">
@@ -59,7 +55,20 @@
                                 </tr>
                                 <tr>
                                     <td><strong>Método de Pago:</strong></td>
-                                    <td><span class="badge bg-secondary">{{ venta.metodo_pago }}</span></td>
+                                    <td>
+                                        {% set metodos = [] %}
+                                        {% if venta.efectivo > 0 %}{{ metodos.append('Efectivo') or '' }}{% endif %}
+                                        {% if venta.transferencia > 0 %}{{ metodos.append('Transferencia') or '' }}{% endif %}
+                                        {% if venta.credito > 0 %}{{ metodos.append('Crédito') or '' }}{% endif %}
+                                        {% if venta.prestamo_personal > 0 %}{{ metodos.append('Préstamo') or '' }}{% endif %}
+                                        {% if metodos|length > 1 %}
+                                            <span class="badge bg-warning">Mixto</span>
+                                        {% elif metodos|length == 1 %}
+                                            <span class="badge bg-success">{{ metodos[0] }}</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">No especificado</span>
+                                        {% endif %}
+                                    </td>
                                 </tr>
                                 <tr>
                                     <td><strong>Total de Items:</strong></td>
@@ -112,7 +121,7 @@
                             <tfoot class="table-info">
                                 <tr>
                                     <td colspan="5" class="text-end"><strong>TOTAL:</strong></td>
-                                    <td class="text-end"><strong>${{ "%.2f"|format(venta.total_venta) }}</strong></td>
+                                    <td class="text-end"><strong>${{ "%.2f"|format(venta.total) }}</strong></td>
                                 </tr>
                             </tfoot>
                         </table>
@@ -134,7 +143,7 @@
                     <div class="card bg-success text-white">
                         <div class="card-body text-center">
                             <h6 class="card-title">Total Venta</h6>
-                            <h3 class="mb-0">${{ "%.2f"|format(venta.total_venta) }}</h3>
+                            <h3 class="mb-0">${{ "%.2f"|format(venta.total) }}</h3>
                         </div>
                     </div>
                 </div>
@@ -142,7 +151,20 @@
                     <div class="card bg-info text-white">
                         <div class="card-body text-center">
                             <h6 class="card-title">Método Pago</h6>
-                            <h3 class="mb-0">{{ venta.metodo_pago }}</h3>
+                            <h3 class="mb-0">
+                                {% set metodos = [] %}
+                                {% if venta.efectivo > 0 %}{{ metodos.append('Efectivo') or '' }}{% endif %}
+                                {% if venta.transferencia > 0 %}{{ metodos.append('Transferencia') or '' }}{% endif %}
+                                {% if venta.credito > 0 %}{{ metodos.append('Crédito') or '' }}{% endif %}
+                                {% if venta.prestamo_personal > 0 %}{{ metodos.append('Préstamo') or '' }}{% endif %}
+                                {% if metodos|length > 1 %}
+                                    Mixto
+                                {% elif metodos|length == 1 %}
+                                    {{ metodos[0] }}
+                                {% else %}
+                                    No especificado
+                                {% endif %}
+                            </h3>
                         </div>
                     </div>
                 </div>
