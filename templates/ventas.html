@@ -23,6 +23,13 @@
                 {% endif %}
             {% endwith %}
 
+            {% if error %}
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <strong>Error:</strong> {{ error }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endif %}
+
             {% if ventas %}
             <div class="card">
                 <div class="card-body">
@@ -55,10 +62,15 @@
                                         <span class="badge bg-primary">{{ venta.items }}</span>
                                     </td>
                                     <td class="text-end">
-                                        <strong>${{ "%.2f"|format(venta.total_venta) }}</strong>
+                                        <strong>${{ "%.2f"|format(venta.total) }}</strong>
                                     </td>
                                     <td>
-                                        <span class="badge bg-secondary">{{ venta.metodo_pago }}</span>
+                                        <span class="badge bg-secondary">
+                                            {% if venta.efectivo > 0 %}Efectivo{% endif %}
+                                            {% if venta.transferencia > 0 %}Transferencia{% endif %}
+                                            {% if venta.credito > 0 %}Crédito{% endif %}
+                                            {% if venta.prestamo_personal > 0 %}Préstamo{% endif %}
+                                        </span>
                                     </td>
                                     <td class="text-center">
                                         <div class="btn-group" role="group">

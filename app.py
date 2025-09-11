@@ -1589,16 +1589,20 @@ def nuevo_cliente():
 @app.route("/ventas")
 @login_required
 def ventas():
-    conn = get_db_connection()
-    ventas = conn.execute("""
-        SELECT v.*, c.nombre AS cliente_nombre,
-               (SELECT COUNT(*) FROM detalles_venta vd WHERE vd.venta_id = v.id_venta) AS items
-        FROM ventas v
-        LEFT JOIN clientes c ON v.cliente_id = c.id_cliente
-        ORDER BY v.fecha_venta DESC, v.fecha_registro DESC
-    """).fetchall()
-    conn.close()
-    return render_template("ventas.html", ventas=ventas)
+    try:
+        conn = get_db_connection()
+        ventas = conn.execute("""
+            SELECT v.*, c.nombre AS cliente_nombre,
+                   (SELECT COUNT(*) FROM detalles_venta vd WHERE vd.venta_id = v.id_venta) AS items
+            FROM ventas v
+            LEFT JOIN clientes c ON v.cliente_id = c.id_cliente
+            ORDER BY v.fecha_venta DESC
+        """).fetchall()
+        conn.close()
+        return render_template("ventas.html", ventas=ventas)
+    except Exception as e:
+        print(f"Error en ventas: {e}")
+        return render_template("ventas.html", ventas=[], error=str(e))
 
 @app.route("/nueva_venta", methods=["GET", "POST"])
 @login_required
