@@ -524,7 +524,15 @@ def api_productos():
         
         conn.close()
         
-        return jsonify([dict(p) for p in productos])
+        # Convertir a diccionario y mapear precio_venta a precio para compatibilidad con POS
+        productos_dict = []
+        for p in productos:
+            producto_dict = dict(p)
+            # Mapear precio_venta a precio para compatibilidad con POS
+            producto_dict['precio'] = producto_dict.get('precio_venta', 0)
+            productos_dict.append(producto_dict)
+        
+        return jsonify(productos_dict)
         
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -845,13 +853,21 @@ def api_ventas_batch():
     """Endpoint para recibir ventas en lote desde el POS"""
     try:
         data = request.get_json()
-        if not data or 'ventas' not in data:
+        if not data:
             return jsonify({"success": False, "error": "Datos de ventas requeridos"}), 400
+        
+        # Aceptar tanto formato {"ventas": [...]} como formato directo [...]
+        if isinstance(data, list):
+            ventas_data = data
+        elif isinstance(data, dict) and 'ventas' in data:
+            ventas_data = data['ventas']
+        else:
+            return jsonify({"success": False, "error": "Formato de datos inválido"}), 400
         
         conn = get_db_connection()
         ventas_recibidas = 0
         
-        for venta_data in data['ventas']:
+        for venta_data in ventas_data:
             try:
                 # Insertar venta principal
                 cursor = conn.execute("""
