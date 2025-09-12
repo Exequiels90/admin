@@ -1698,7 +1698,7 @@ def ver_venta(id_venta):
         
         # Obtener información de la venta
         venta = conn.execute("""
-            SELECT v.*, c.nombre AS cliente_nombre
+            SELECT v.*, c.nombre AS cliente_nombre, c.apellido AS cliente_apellido
             FROM ventas v
             LEFT JOIN clientes c ON v.cliente_id = c.id_cliente
             WHERE v.id_venta = ?
@@ -1720,10 +1720,39 @@ def ver_venta(id_venta):
         
         conn.close()
         return render_template("ver_venta.html", venta=venta, detalles=detalles)
+        except Exception as e:
+            print(f"Error en ver_venta: {e}")
+            flash(f"Error al cargar la venta: {e}", "danger")
+            return redirect(url_for("ventas"))
+
+@app.route("/prestamos_personales")
+@login_required
+def prestamos_personales():
+    """Muestra los préstamos personales"""
+    try:
+        conn = get_db_connection()
+        
+        # Obtener préstamos personales
+        prestamos = conn.execute("""
+            SELECT 
+                v.id_venta,
+                v.fecha_venta,
+                v.prestamo_personal,
+                c.nombre AS cliente_nombre,
+                c.apellido AS cliente_apellido,
+                c.telefono,
+                c.email
+            FROM ventas v
+            LEFT JOIN clientes c ON v.cliente_id = c.id_cliente
+            WHERE v.prestamo_personal > 0
+            ORDER BY v.fecha_venta DESC
+        """).fetchall()
+        
+        conn.close()
+        return render_template("prestamos_personales.html", prestamos=prestamos)
     except Exception as e:
-        print(f"Error en ver_venta: {e}")
-        flash(f"Error al cargar la venta: {e}", "danger")
-        return redirect(url_for("ventas"))
+        print(f"Error en prestamos_personales: {e}")
+        return render_template("prestamos_personales.html", prestamos=[], error=str(e))
 
 @app.route("/eliminar_venta/<int:id_venta>")
 def eliminar_venta(id_venta):

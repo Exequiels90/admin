@@ -51,7 +51,13 @@
                             <table class="table table-borderless">
                                 <tr>
                                     <td><strong>Cliente:</strong></td>
-                                    <td>{{ venta.cliente_nombre or 'Cliente General' }}</td>
+                                    <td>
+                                        {% if venta.cliente_nombre %}
+                                            {{ venta.cliente_nombre }} {{ venta.cliente_apellido or '' }}
+                                        {% else %}
+                                            Cliente General
+                                        {% endif %}
+                                    </td>
                                 </tr>
                                 <tr>
                                     <td><strong>Método de Pago:</strong></td>
