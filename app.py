@@ -1763,7 +1763,7 @@ def eliminar_venta(id_venta):
     if not venta:
         conn.close()
         flash("Venta no encontrada", "danger")
-        return redirect(url_for("listar_ventas"))
+        return redirect(url_for("ventas"))
     
     # Obtener detalles de la venta para revertir el stock
     detalles = conn.execute("""
