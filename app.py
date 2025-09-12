@@ -1720,10 +1720,10 @@ def ver_venta(id_venta):
         
         conn.close()
         return render_template("ver_venta.html", venta=venta, detalles=detalles)
-        except Exception as e:
-            print(f"Error en ver_venta: {e}")
-            flash(f"Error al cargar la venta: {e}", "danger")
-            return redirect(url_for("ventas"))
+    except Exception as e:
+        print(f"Error en ver_venta: {e}")
+        flash(f"Error al cargar la venta: {e}", "danger")
+        return redirect(url_for("ventas"))
 
 @app.route("/prestamos_personales")
 @login_required
