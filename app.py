@@ -2062,6 +2062,7 @@ def api_crear_producto():
         categoria_id = data.get("categoria_id")
         precio_compra = data.get("precio_compra", 0)
         precio_venta = data.get("precio_venta", 0)
+        codigo = data.get("codigo")  # Código del POS
         
         if not nombre:
             return jsonify({"success": False, "message": "El nombre es obligatorio"})
@@ -2069,15 +2070,21 @@ def api_crear_producto():
         conn = get_db_connection()
         cursor = conn.cursor()
         
-        # Generar código único
-        codigo = generar_codigo()
-        while conn.execute("SELECT 1 FROM productos WHERE codigo = ?", (codigo,)).fetchone():
+        # Usar código del POS si se proporciona, sino generar uno nuevo
+        if not codigo:
             codigo = generar_codigo()
+            while conn.execute("SELECT 1 FROM productos WHERE codigo = ?", (codigo,)).fetchone():
+                codigo = generar_codigo()
+        else:
+            # Verificar si el código ya existe
+            if conn.execute("SELECT 1 FROM productos WHERE codigo = ?", (codigo,)).fetchone():
+                return jsonify({"success": False, "message": f"El producto con código {codigo} ya existe"})
         
+        stock = data.get("stock", 0)
         cursor.execute("""
-            INSERT INTO productos (codigo, nombre, categoria_id, precio_compra, precio_venta)
-            VALUES (?, ?, ?, ?, ?)
-        """, (codigo, nombre, categoria_id, precio_compra, precio_venta))
+            INSERT INTO productos (codigo, nombre, categoria_id, precio_compra, precio_venta, stock)
+            VALUES (?, ?, ?, ?, ?, ?)
+        """, (codigo, nombre, categoria_id, precio_compra, precio_venta, stock))
         
         id_producto = cursor.lastrowid
         conn.commit()
