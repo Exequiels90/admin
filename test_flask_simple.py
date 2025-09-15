@@ -18,3 +18,6 @@ def test():
 if __name__ == '__main__':
     print("🚀 Iniciando servidor Flask simple...")
     app.run(debug=True, port=5001)
+
+
+

@@ -69,6 +69,20 @@ def init_admin_database():
     )
     """)
     
+    # Tabla de detalles de venta
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS detalles_venta (
+        id_detalle INTEGER PRIMARY KEY AUTOINCREMENT,
+        venta_id INTEGER NOT NULL,
+        producto_id INTEGER NOT NULL,
+        cantidad REAL NOT NULL,
+        precio_unitario REAL NOT NULL,
+        subtotal REAL NOT NULL,
+        FOREIGN KEY (venta_id) REFERENCES ventas (id_venta),
+        FOREIGN KEY (producto_id) REFERENCES productos (id_producto)
+    )
+    """)
+    
     # Tabla de auditoría (si no existe)
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS auditoria (
