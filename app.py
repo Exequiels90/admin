@@ -488,16 +488,39 @@ def api_sync():
         
         # Registrar ventas del cliente POS
         for venta_data in ventas_recibidas:
-            conn.execute("""
-                INSERT INTO ventas_pos (
-                    cliente_id, total, fecha_venta, productos_json
-                ) VALUES (?, ?, ?, ?)
+            # Insertar en la tabla ventas principal
+            cursor = conn.execute("""
+                INSERT INTO ventas (
+                    fecha_venta, total, usuario_id, efectivo, transferencia, credito, prestamo_personal,
+                    cliente_id, sincronizado, fecha_sincronizacion
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, CURRENT_TIMESTAMP)
             """, (
-                venta_data.get('cliente_id'),
-                venta_data.get('total', 0),
                 venta_data.get('fecha_venta'),
-                json.dumps(venta_data.get('productos', []))
+                venta_data.get('total', 0),
+                venta_data.get('id_usuario', 1),  # Usuario por defecto
+                venta_data.get('efectivo', 0),
+                venta_data.get('transferencia', 0),
+                venta_data.get('credito', 0),
+                venta_data.get('prestamo_personal', 0),
+                venta_data.get('cliente_id')
             ))
+            
+            # Obtener el ID de la venta insertada
+            venta_id = cursor.lastrowid
+            
+            # Insertar detalles de la venta
+            for item in venta_data.get('productos', []):
+                conn.execute("""
+                    INSERT INTO detalles_venta (
+                        venta_id, producto_id, cantidad, precio_unitario, subtotal
+                    ) VALUES (?, ?, ?, ?, ?)
+                """, (
+                    venta_id,
+                    item.get('producto_id'),
+                    item.get('cantidad', 0),
+                    item.get('precio_unitario', 0),
+                    item.get('subtotal', 0)
+                ))
         
         conn.commit()
         conn.close()
