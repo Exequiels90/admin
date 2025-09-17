@@ -1638,12 +1638,18 @@ def nueva_venta():
         metodo_pago = request.form.get("metodo_pago", "Efectivo")
         observaciones = request.form.get("observaciones", "")
         
+        # Convertir método de pago a campos separados
+        efectivo = 0
+        transferencia = 0
+        credito = 0
+        prestamo_personal = 0
+        
         # Crear la venta
         cursor = conn.cursor()
         cursor.execute("""
-            INSERT INTO ventas (id_cliente, fecha_venta, metodo_pago, observaciones)
-            VALUES (?, ?, ?, ?)
-        """, (id_cliente, fecha_venta, metodo_pago, observaciones))
+            INSERT INTO ventas (id_cliente, fecha_venta, efectivo, transferencia, credito, prestamo_personal, observaciones)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        """, (id_cliente, fecha_venta, efectivo, transferencia, credito, prestamo_personal, observaciones))
         id_venta = cursor.lastrowid
         
         # Procesar productos de la venta
@@ -1679,12 +1685,22 @@ def nueva_venta():
                     WHERE id_producto = ?
                 """, (cantidad, int(prod_id)))
         
-        # Actualizar el total de la venta
+        # Asignar el total al método de pago correspondiente
+        if metodo_pago == "Efectivo":
+            efectivo = total_venta
+        elif metodo_pago == "Transferencia":
+            transferencia = total_venta
+        elif metodo_pago == "Crédito":
+            credito = total_venta
+        elif metodo_pago == "Préstamo":
+            prestamo_personal = total_venta
+        
+        # Actualizar el total y los métodos de pago de la venta
         cursor.execute("""
             UPDATE ventas 
-            SET total = ? 
+            SET total = ?, efectivo = ?, transferencia = ?, credito = ?, prestamo_personal = ?
             WHERE id_venta = ?
-        """, (total_venta, id_venta))
+        """, (total_venta, efectivo, transferencia, credito, prestamo_personal, id_venta))
         
         conn.commit()
         conn.close()
